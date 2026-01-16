@@ -506,6 +506,12 @@ body::before {
     color: white;
 }
 
+#restartFromLevel1Button {
+    background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+    color: #2d3436;
+    font-weight: bold;
+}
+
 .message-content button:hover {
     transform: scale(1.1);
 }

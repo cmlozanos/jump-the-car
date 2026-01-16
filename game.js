@@ -400,6 +400,228 @@ const levels = [
             { distance: 6000, y: 350, width: 80, height: 40, type: 'airplane' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' }
         ]
+    },
+    {
+        goalDistance: 7500,
+        obstacles: [
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 7200, y: 340, width: 80, height: 40, type: 'airplane' }
+        ]
+    },
+    {
+        goalDistance: 8000,
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 7500, y: 350, width: 80, height: 40, type: 'airplane' }
+        ]
+    },
+    {
+        goalDistance: 8500,
+        obstacles: [
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' }
+        ]
+    },
+    {
+        goalDistance: 9000,
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' }
+        ]
+    },
+    {
+        goalDistance: 9500,
+        obstacles: [
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' }
+        ]
+    },
+    {
+        goalDistance: 10000,
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' }
+        ]
+    },
+    {
+        goalDistance: 10500,
+        obstacles: [
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 9600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 10200, y: 340, width: 80, height: 40, type: 'airplane' }
+        ]
+    },
+    {
+        goalDistance: 11000,
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 10000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 10500, y: 520, width: 40, height: 20, type: 'spikes' }
+        ]
+    },
+    {
+        goalDistance: 11500,
+        obstacles: [
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 9600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 10200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 10800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 11400, y: 520, width: 40, height: 20, type: 'obstacle' }
+        ]
+    },
+    {
+        goalDistance: 12000,
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 10000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 10500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 11000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 11500, y: 520, width: 60, height: 30, type: 'hole' }
+        ]
     }
 ];
 
@@ -928,6 +1150,11 @@ function setupEventListeners() {
         document.getElementById('messageOverlay').style.display = 'none';
         resumeAudioContext(); // Resumir audio si está suspendido
         nextLevel();
+    });
+    document.getElementById('restartFromLevel1Button').addEventListener('click', () => {
+        document.getElementById('messageOverlay').style.display = 'none';
+        resumeAudioContext(); // Resumir audio si está suspendido
+        restartFromLevel1();
     });
     
     // Resumir audio al hacer clic en el canvas (para cumplir con política de autoplay)
@@ -1720,13 +1947,16 @@ function drawCar() {
 }
 
 // Mostrar mensaje
-function showMessage(title, text, showNextLevel = false) {
+function showMessage(title, text, showNextLevel = false, showRestartFromLevel1 = false) {
     // Detener sonido del motor cuando se muestra un mensaje (victoria/derrota)
     stopEngineSound();
     
     document.getElementById('messageTitle').textContent = title;
     document.getElementById('messageText').textContent = text;
     document.getElementById('nextLevelButton').style.display = showNextLevel ? 'inline-block' : 'none';
+    document.getElementById('restartFromLevel1Button').style.display = showRestartFromLevel1 ? 'inline-block' : 'none';
+    // Ocultar botón de reintentar cuando se muestre el botón de reiniciar desde nivel 1
+    document.getElementById('retryButton').style.display = showRestartFromLevel1 ? 'none' : 'inline-block';
     document.getElementById('messageOverlay').style.display = 'flex';
 }
 
@@ -1770,6 +2000,21 @@ function resetGame() {
     }
 }
 
+// Variable para indicar si se completaron todos los niveles
+let allLevelsCompleted = false;
+
+// Reiniciar desde el nivel 1
+function restartFromLevel1() {
+    allLevelsCompleted = false;
+    currentLevel = 1;
+    currentLevelData = levels[0];
+    roadSpeed = getRoadSpeedForLevel(1);
+    attempts = 0;
+    currentDistance = 0;
+    roadScrollX = 0;
+    resetGame();
+}
+
 // Siguiente nivel
 function nextLevel() {
     if (currentLevel < levels.length) {
@@ -1782,7 +2027,9 @@ function nextLevel() {
         roadScrollX = 0;
         resetGame();
     } else {
-        showMessage('¡Felicidades! 🏆', '¡Completaste todos los niveles! ¡Eres un campeón!', false);
+        // Completaste todos los niveles
+        allLevelsCompleted = true;
+        showMessage('¡Felicidades! 🏆', `¡Completaste todos los ${levels.length} niveles! ¡Eres un campeón!`, false, true);
     }
 }
 
