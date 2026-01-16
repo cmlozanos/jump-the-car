@@ -34,7 +34,7 @@ Un juego educativo y divertido para niños de 5 años donde deben ayudar a un co
 GitHub Pages es completamente gratuito y se configura en minutos:
 
 1. **Habilita GitHub Pages en tu repositorio:**
-   - Ve a tu repositorio en GitHub: `https://github.com/tu-usuario/jump-the-car`
+   - Ve a tu repositorio en GitHub: `https://github.com/cmlozanos/jump-the-car`
    - Haz clic en **Settings** (Configuración)
    - En el menú lateral, busca **Pages**
    - En **Source** (Fuente), selecciona **Deploy from a branch**
@@ -46,9 +46,10 @@ GitHub Pages es completamente gratuito y se configura en minutos:
 
 3. **Tu juego estará disponible en:**
    ```
-   https://tu-usuario.github.io/jump-the-car
+   https://cmlozanos.github.io/jump-the-car
    ```
-   (Reemplaza `tu-usuario` con tu nombre de usuario de GitHub)
+   
+   🎮 **¡Juega ahora!** Una vez configurado, tu juego estará disponible públicamente en la URL de arriba.
 
 4. **Actualizaciones automáticas:** Cada vez que hagas `git push` a la rama main, tu sitio se actualizará automáticamente en unos minutos.
 
