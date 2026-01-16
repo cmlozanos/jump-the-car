@@ -1,0 +1,1264 @@
+// ============================================================================
+// CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
+// ============================================================================
+
+// FÍSICA DEL SALTO
+const JUMP_PHYSICS = {
+    GRAVITY: 0.18,                    // Gravedad (menor = cae más lento, mayor = cae más rápido)
+    JUMP_VELOCITY_MULTIPLIER: 2.0,   // Factor multiplicador de velocidad inicial (mayor = saltos más altos)
+};
+
+// POSICIONAMIENTO
+const POSITIONS = {
+    CAR_FIXED_X: 150,                // Posición X fija del coche (no cambia)
+    CAR_INITIAL_Y: 500,              // Posición Y inicial del coche
+    GROUND_LEVEL: 500,                // Nivel del suelo donde el coche aterriza
+    ROAD_Y: 520,                      // Posición Y donde comienza la pista
+    ROAD_HEIGHT: 80,                  // Altura de la pista
+    GOAL_Y: 520,                      // Posición Y de la meta (mismo nivel que la pista)
+};
+
+// DIMENSIONES
+const DIMENSIONS = {
+    CAR_WIDTH: 60,                    // Ancho del coche
+    CAR_HEIGHT: 50,                   // Alto del coche
+    GOAL_WIDTH: 100,                  // Ancho de la meta
+    GOAL_HEIGHT: 60,                  // Alto de la meta
+    GOAL_POLE_WIDTH: 8,               // Ancho del poste de la meta
+    GOAL_POLE_HEIGHT_EXTRA: 30,       // Altura extra del poste de la meta
+    CAR_SHADOW_WIDTH: 60,             // Ancho de la sombra del coche
+    CAR_SHADOW_HEIGHT: 15,            // Alto de la sombra del coche
+    CAR_SHADOW_OFFSET: 5,             // Offset de la sombra respecto al coche
+};
+
+// VELOCIDADES Y MOVIMIENTO
+const SPEED = {
+    ROAD_SCROLL: 1.5,                 // Velocidad de desplazamiento de la carretera (unidades de distancia por frame)
+    ROAD_LINE_OFFSET: 40,             // Offset para animación de líneas de la carretera
+    PIXELS_PER_DISTANCE_UNIT: 1.0,    // Escala: píxeles por unidad de distancia (ajustar si es necesario)
+};
+
+// PARÁMETROS BASE DE LOS COCHES
+const CAR_BASE_STATS = {
+    ANGLE: 45,                        // Ángulo base del salto (grados)
+    SPEED: 9,                         // Velocidad base del coche
+    ACCELERATION: 0.96,               // Factor de resistencia del aire (0-1)
+};
+
+// UI Y CONTROLES
+const UI = {
+    BUTTON_SIZE: 60,                  // Tamaño de los botones circulares
+    BUTTON_PADDING: 20,               // Padding de los botones desde los bordes
+    LEVEL_INFO_WIDTH: 150,            // Ancho del panel de información de nivel
+    LEVEL_INFO_HEIGHT: 40,            // Alto del panel de información de nivel
+    LEVEL_INFO_FONT_SIZE: 18,         // Tamaño de fuente del texto de nivel
+    BUTTON_ICON_FONT_SIZE: 30,        // Tamaño de fuente de los iconos de botones
+};
+
+// COLISIONES Y DETECCIÓN
+const COLLISION = {
+    GOAL_DETECTION_RANGE: 50,         // Rango de detección de colisión con la meta
+    CANVAS_BORDER_MARGIN: 0,          // Margen para colisiones con bordes del canvas
+};
+
+// VISUALIZACIÓN DE LA META
+const GOAL_VISUAL = {
+    DRAW_RANGE_BEFORE: 200,           // Rango antes del coche para dibujar la meta
+    DRAW_RANGE_AFTER: 200,            // Rango después del coche para dibujar la meta
+    CHECKERED_SQUARE_SIZE: 10,        // Tamaño de cada cuadrado de la bandera
+    ARCH_RADIUS: 150,                 // Radio del arco decorativo de la meta
+    TEXT_OFFSET_Y: 15,                // Offset vertical del texto "META"
+};
+
+// ============================================================================
+// FIN DE CONSTANTES - NO MODIFICAR CÓDIGO ABAJO SIN ACTUALIZAR CONSTANTES
+// ============================================================================
+
+// Configuración del juego
+let canvas = null;
+let ctx = null;
+
+// Estados del juego
+let gameState = 'selecting'; // 'selecting', 'playing', 'jumping', 'won', 'lost', 'exploded'
+let selectedCar = null;
+let currentLevel = 1;
+let attempts = 0;
+let explosionActive = false;
+let explosionParticles = [];
+let gameLoopRunning = false; // Control para evitar múltiples bucles de juego
+
+// Sprites cargados
+const sprites = {
+    cars: {},
+    carShadow: null,
+    obstacle: null,
+    goal: null,
+    cloud: null,
+    sun: null
+};
+
+// Función para cargar una imagen
+function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+// Cargar todos los sprites
+async function loadSprites() {
+    try {
+        // Cargar sprites de coches (solo 2 coches ahora)
+        for (let i = 1; i <= 2; i++) {
+            sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg`);
+        }
+        
+        // Cargar sprite de sombra
+        sprites.carShadow = await loadImage('sprites/cars/car_shadow.svg');
+        
+        // Cargar sprites de ambiente
+        sprites.obstacle = await loadImage('sprites/environment/obstacle.svg');
+        sprites.goal = await loadImage('sprites/environment/goal.svg');
+        sprites.cloud = await loadImage('sprites/environment/cloud.svg');
+        sprites.sun = await loadImage('sprites/environment/sun.svg');
+        
+        console.log('Todos los sprites cargados exitosamente');
+        return true;
+    } catch (error) {
+        console.error('Error cargando sprites:', error);
+        return false;
+    }
+}
+
+// Parámetros del salto (se establecen según el coche seleccionado)
+let angle = CAR_BASE_STATS.ANGLE;
+let speed = CAR_BASE_STATS.SPEED;
+let acceleration = CAR_BASE_STATS.ACCELERATION;
+
+// Posición del coche (fijo en X, solo se mueve verticalmente)
+const carFixedX = POSITIONS.CAR_FIXED_X;
+let carY = POSITIONS.CAR_INITIAL_Y;
+let carVx = 0; // Velocidad horizontal (no se usa, el coche está fijo)
+let carVy = 0; // Velocidad vertical
+let isJumping = false;
+let jumpStartTime = 0;
+
+// Scroll de la carretera
+let roadScrollX = 0; // Posición de scroll de la carretera
+const roadSpeed = SPEED.ROAD_SCROLL;
+
+// Definición de coches disponibles (Monster Trucks Hot Wheels)
+const cars = [
+    {
+        id: 1,
+        name: 'Fire Blazer 🔥',
+        color: '#dc143c',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Rojo',
+        theme: {
+            primary: '#dc143c',
+            secondary: '#ff4500',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #dc143c 0%, #ff4500 100%)',
+            icon: '🔥'
+        }
+    },
+    {
+        id: 2,
+        name: 'Golden Bolt ⚡',
+        color: '#ffd700',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Amarillo',
+        theme: {
+            primary: '#ffd700',
+            secondary: '#ff8c00',
+            accent: '#ff4500',
+            gradient: 'linear-gradient(135deg, #ffd700 0%, #ff8c00 100%)',
+            icon: '⚡'
+        }
+    }
+];
+
+// Definición de niveles (distancias desde el inicio) - Con más espacio entre obstáculos
+const levels = [
+    {
+        goalDistance: 2500, // Distancia total hasta la meta
+        obstacles: [
+            { distance: 500, y: 520, width: 40, height: 20 },
+            { distance: 1000, y: 520, width: 40, height: 20 },
+            { distance: 1500, y: 520, width: 40, height: 20 },
+            { distance: 2000, y: 520, width: 40, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 3000,
+        obstacles: [
+            { distance: 600, y: 520, width: 35, height: 20 },
+            { distance: 1200, y: 480, width: 35, height: 20 },
+            { distance: 1800, y: 520, width: 35, height: 20 },
+            { distance: 2400, y: 480, width: 35, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 3500,
+        obstacles: [
+            { distance: 500, y: 520, width: 30, height: 20 },
+            { distance: 1000, y: 480, width: 30, height: 20 },
+            { distance: 1500, y: 520, width: 30, height: 20 },
+            { distance: 2000, y: 480, width: 30, height: 20 },
+            { distance: 2500, y: 520, width: 30, height: 20 },
+            { distance: 3000, y: 480, width: 30, height: 20 }
+        ]
+    }
+];
+
+let currentLevelData = levels[0];
+let currentDistance = 0; // Distancia recorrida en el nivel actual
+
+// Inicialización
+async function init() {
+    // Inicializar canvas y contexto
+    canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('Canvas no encontrado');
+        return;
+    }
+    ctx = canvas.getContext('2d');
+    if (!ctx) {
+        console.error('No se pudo obtener el contexto 2D del canvas');
+        return;
+    }
+    
+    // Cargar sprites primero
+    await loadSprites();
+    
+    setupCarSelection();
+    setupControls();
+    setupEventListeners();
+    resetGame();
+}
+
+// Configurar panel de selección de coches
+function setupCarSelection() {
+    const carsGrid = document.getElementById('carsGrid');
+    carsGrid.innerHTML = '';
+    
+    cars.forEach(car => {
+        const carOption = document.createElement('div');
+        carOption.className = 'car-option';
+        
+        // Crear elemento de imagen para el sprite del coche
+        const carSpriteDiv = document.createElement('div');
+        carSpriteDiv.className = 'car-sprite';
+        
+        // Crear imagen del coche usando el sprite SVG
+        const carImg = document.createElement('img');
+        carImg.src = `sprites/cars/car_${car.id}.svg`;
+        carImg.alt = car.name;
+        carImg.style.width = '100%';
+        carImg.style.height = '100%';
+        carImg.style.objectFit = 'contain';
+        carImg.style.display = 'block';
+        
+        // Fallback: si la imagen no carga, mostrar color de fondo
+        carImg.onerror = function() {
+            this.style.display = 'none';
+            carSpriteDiv.style.background = car.color;
+            carSpriteDiv.style.border = '3px solid #2d3436';
+        };
+        
+        carSpriteDiv.appendChild(carImg);
+        
+        carOption.innerHTML = `
+            <div class="car-name">${car.name}</div>
+            <div class="car-stats">${car.description}</div>
+        `;
+        carOption.insertBefore(carSpriteDiv, carOption.firstChild);
+        
+        carOption.addEventListener('click', (e) => selectCar(car, e.currentTarget));
+        carsGrid.appendChild(carOption);
+    });
+}
+
+// Seleccionar coche
+function selectCar(car, element = null) {
+    selectedCar = car;
+    document.querySelectorAll('.car-option').forEach(opt => opt.classList.remove('selected'));
+    
+    // Si se proporciona el elemento, marcarlo como seleccionado
+    if (element) {
+        element.classList.add('selected');
+    } else {
+        // Si no se proporciona, buscar el elemento correspondiente al coche
+        const carOptions = document.querySelectorAll('.car-option');
+        carOptions.forEach((opt, index) => {
+            if (cars[index].id === car.id) {
+                opt.classList.add('selected');
+            }
+        });
+    }
+    
+    // Aplicar valores pre-fijados del coche (no ajustables)
+    angle = car.baseAngle;
+    speed = car.baseSpeed;
+    acceleration = car.baseAcceleration;
+    
+    // Aplicar tema visual del coche seleccionado
+    applyCarTheme(car);
+    
+    // Mostrar panel de juego
+    setTimeout(() => {
+        document.getElementById('carSelectionPanel').style.display = 'none';
+        document.getElementById('gamePanel').style.display = 'flex';
+        gameState = 'playing';
+        resetGame();
+        draw();
+        // Iniciar el bucle del juego automáticamente
+        if (canvas && ctx && !gameLoopRunning) {
+            gameLoop();
+        }
+    }, 500);
+}
+
+// Aplicar tema visual según el coche seleccionado
+function applyCarTheme(car) {
+    const theme = car.theme;
+    const header = document.querySelector('.header h1');
+    
+    // Actualizar título del header con el icono del coche
+    if (header) {
+        header.textContent = `${theme.icon} Monster Trucks Hot Wheels ${theme.icon}`;
+        // Usar color sólido con sombra para mejor legibilidad
+        header.style.color = theme.primary;
+        header.style.textShadow = `2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px ${theme.primary}80`;
+        header.style.background = 'none';
+        header.style.webkitBackgroundClip = 'unset';
+        header.style.webkitTextFillColor = 'unset';
+        header.style.backgroundClip = 'unset';
+    }
+}
+
+// Restaurar tema por defecto
+function resetDefaultTheme() {
+    const header = document.querySelector('.header h1');
+    
+    if (header) {
+        header.textContent = '🔥 Monster Trucks Hot Wheels 🔥';
+        header.style.color = '#ff6b6b';
+        header.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 107, 107, 0.5)';
+        header.style.background = 'none';
+        header.style.webkitBackgroundClip = 'unset';
+        header.style.webkitTextFillColor = 'unset';
+        header.style.backgroundClip = 'unset';
+    }
+}
+
+// Cambiar coche (volver al panel de selección sin perder el nivel)
+function changeCar() {
+    // Solo permitir cambiar coche si no está saltando
+    if (isJumping || gameState === 'jumping' || gameState === 'exploded') {
+        return;
+    }
+    
+    // Ocultar panel de juego y mostrar panel de selección
+    document.getElementById('gamePanel').style.display = 'none';
+    document.getElementById('carSelectionPanel').style.display = 'block';
+    gameState = 'selecting';
+    
+    // Resaltar el coche actualmente seleccionado
+    document.querySelectorAll('.car-option').forEach((opt, index) => {
+        opt.classList.remove('selected');
+        if (selectedCar && cars[index].id === selectedCar.id) {
+            opt.classList.add('selected');
+        }
+    });
+    
+    // Restaurar tema por defecto cuando se vuelve a selección
+    resetDefaultTheme();
+}
+
+// Configurar controles (ya no hay sliders, solo botones)
+function setupControls() {
+    // Los valores están pre-fijados según el coche seleccionado
+    // No hay sliders para ajustar
+}
+
+// Actualizar displays de controles (ya no se usa, pero se mantiene para compatibilidad)
+function updateControlDisplays() {
+    // Función vacía - las estadísticas ya no se muestran
+}
+
+// Configurar event listeners
+function setupEventListeners() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+        console.error('Canvas no encontrado');
+        return;
+    }
+    const buttonSize = UI.BUTTON_SIZE;
+    const padding = UI.BUTTON_PADDING;
+    
+    // Función para obtener posición del toque/clic relativa al canvas
+    function getCanvasPosition(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        let x, y;
+        if (e.touches && e.touches.length > 0) {
+            x = (e.touches[0].clientX - rect.left) * scaleX;
+            y = (e.touches[0].clientY - rect.top) * scaleY;
+        } else {
+            x = (e.clientX - rect.left) * scaleX;
+            y = (e.clientY - rect.top) * scaleY;
+        }
+        return { x, y };
+    }
+    
+    // Función para verificar si se tocó un botón
+    function checkButtonClick(x, y) {
+        // Botón de cambiar coche (esquina superior derecha)
+        const changeX = canvas.width - padding - buttonSize;
+        const changeY = padding;
+        const changeCenterX = changeX + buttonSize/2;
+        const changeCenterY = changeY + buttonSize/2;
+        const changeDist = Math.sqrt((x - changeCenterX) ** 2 + (y - changeCenterY) ** 2);
+        
+        if (changeDist <= buttonSize/2) {
+            changeCar();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Tocar el canvas para saltar o interactuar con botones (tablet)
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const pos = getCanvasPosition(e);
+        
+        // Verificar si se tocó un botón
+        if (checkButtonClick(pos.x, pos.y)) {
+            return;
+        }
+        
+        // Si no es un botón, saltar
+        if (gameState === 'playing' || gameState === 'jumping') {
+            startJump();
+        }
+    });
+    
+    canvas.addEventListener('click', (e) => {
+        const pos = getCanvasPosition(e);
+        
+        // Verificar si se hizo clic en un botón
+        if (checkButtonClick(pos.x, pos.y)) {
+            return;
+        }
+        
+        // Si no es un botón, saltar
+        if (gameState === 'playing' || gameState === 'jumping') {
+            startJump();
+        }
+    });
+    
+    document.getElementById('retryButton').addEventListener('click', () => {
+        document.getElementById('messageOverlay').style.display = 'none';
+        resetGame();
+    });
+    document.getElementById('nextLevelButton').addEventListener('click', () => {
+        document.getElementById('messageOverlay').style.display = 'none';
+        nextLevel();
+    });
+}
+
+// Iniciar salto
+function startJump() {
+    // Solo permitir saltar si no está saltando y el juego está en estado 'playing'
+    if (isJumping || gameState !== 'playing') return;
+    
+    // Verificar si ya pasó la meta
+    if (currentDistance >= currentLevelData.goalDistance) {
+        gameState = 'lost';
+        showMessage('¡Oh no! 😢', 'Te pasaste de la meta. ¡Inténtalo de nuevo!');
+        return;
+    }
+    
+    // Verificar colisión antes de saltar (por si acaso)
+    if (checkObstacleCollisions()) {
+        gameState = 'lost';
+        showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+        return;
+    }
+    
+    attempts++;
+    
+    isJumping = true;
+    gameState = 'jumping';
+    jumpStartTime = Date.now();
+    
+    // Calcular velocidad inicial basada en ángulo y velocidad
+    const angleRad = (angle * Math.PI) / 180;
+    carVy = -speed * Math.sin(angleRad) * JUMP_PHYSICS.JUMP_VELOCITY_MULTIPLIER;
+    
+    // El coche NO se mueve horizontalmente (carVx = 0 siempre, está fijo en X)
+    carVx = 0;
+}
+
+// Bucle principal del juego
+function gameLoop() {
+    if (gameState === 'lost' || gameState === 'won' || gameState === 'exploded') {
+        // Si el juego terminó, solo dibujar y parar
+        if (gameState === 'exploded' && explosionActive) {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        } else {
+            gameLoopRunning = false; // Marcar que el bucle se detuvo
+        }
+        return;
+    }
+    
+    gameLoopRunning = true; // Marcar que el bucle está ejecutándose
+    update();
+    draw();
+    
+    // Continuar el bucle mientras:
+    // - El coche está saltando
+    // - El coche está explotando
+    // - El juego está en estado playing (carretera en movimiento)
+    if (isJumping || explosionActive || gameState === 'playing') {
+        requestAnimationFrame(gameLoop);
+    } else {
+        gameLoopRunning = false; // Marcar que el bucle se detuvo
+    }
+}
+
+// Iniciar el juego automáticamente
+function startGameLoop() {
+    if (gameState === 'playing' || gameState === 'jumping') {
+        gameLoop();
+    }
+}
+
+// Actualizar física
+function update() {
+    const carWidth = DIMENSIONS.CAR_WIDTH;
+    const carHeight = DIMENSIONS.CAR_HEIGHT;
+    const groundLevel = POSITIONS.GROUND_LEVEL;
+    
+    // Mover la carretera hacia la izquierda (scroll)
+    if (gameState === 'playing' || gameState === 'jumping') {
+        currentDistance += roadSpeed;
+        roadScrollX += roadSpeed;
+    }
+    
+    // Si el coche está saltando, actualizar física vertical
+    if (isJumping) {
+        const gravity = JUMP_PHYSICS.GRAVITY;
+        
+        // Aplicar gravedad a la velocidad vertical
+        carVy += gravity;
+        
+        // Actualizar posición vertical
+        carY += carVy;
+        
+        // Verificar colisiones con bordes verticales del canvas
+        if (carY < 0 || carY + carHeight > canvas.height) {
+            // Colisión con borde del canvas
+            gameState = 'lost';
+            isJumping = false;
+            showMessage('¡Oh no! 😢', 'Chocaste con el borde del camino. ¡Inténtalo de nuevo!');
+            return;
+        }
+        
+        // Verificar colisiones con obstáculos
+        if (checkObstacleCollisions()) {
+            gameState = 'lost';
+            isJumping = false;
+            showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+            return;
+        }
+        
+        // Verificar si llegó a la meta mientras salta
+        if (checkGoalReached()) {
+            gameState = 'won';
+            isJumping = false;
+            showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
+            return;
+        }
+        
+        // Verificar si el coche está en el suelo
+        if (carY >= groundLevel && carVy > 0) {
+            carY = groundLevel;
+            carVy = 0;
+            isJumping = false;
+            gameState = 'playing'; // Volver al estado de juego para permitir otro salto
+            
+            // Verificar si pasó la meta antes de detenerse
+            // Solo si la meta ya pasó completamente por el coche (está a la izquierda del coche)
+            // Y solo si no colisionó con la meta
+            if (!checkGoalReached()) {
+                const goalScreenX = carFixedX + (currentLevelData.goalDistance - currentDistance);
+                const goalWidth = DIMENSIONS.GOAL_WIDTH;
+                // Solo activar si la meta pasó completamente (está a la izquierda del coche)
+                if (goalScreenX + goalWidth < carFixedX - 10 && currentDistance > currentLevelData.goalDistance) {
+                    gameState = 'lost';
+                    showMessage('¡Oh no! 😢', 'Te pasaste de la meta. ¡Inténtalo de nuevo!');
+                    return;
+                }
+            }
+        }
+    } else if (gameState === 'playing') {
+        // Verificar colisiones con obstáculos incluso cuando no está saltando (en el suelo)
+        if (checkObstacleCollisions()) {
+            gameState = 'lost';
+            showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+            return;
+        }
+        
+        // Si no está saltando pero está en estado playing, verificar si llegó a la meta
+        if (checkGoalReached()) {
+            gameState = 'won';
+            showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
+            return;
+        }
+        
+        // Verificar si pasó la meta
+        // Solo si la meta ya pasó completamente por el coche (está a la izquierda del coche)
+        // Y solo si no colisionó con la meta
+        if (!checkGoalReached()) {
+            const goalScreenX = carFixedX + (currentLevelData.goalDistance - currentDistance);
+            const goalWidth = 100;
+            // Solo activar si la meta pasó completamente (está a la izquierda del coche)
+            if (goalScreenX + goalWidth < carFixedX - 10 && currentDistance > currentLevelData.goalDistance) {
+                gameState = 'lost';
+                showMessage('¡Oh no! 😢', 'Te pasaste de la meta. ¡Inténtalo de nuevo!');
+                return;
+            }
+        }
+    }
+}
+
+// Verificar colisiones con obstáculos
+function checkObstacleCollisions() {
+    // No verificar colisiones si el coche ya pasó la meta
+    if (currentDistance >= currentLevelData.goalDistance) {
+        return false;
+    }
+    
+    const carWidth = DIMENSIONS.CAR_WIDTH;
+    const carHeight = DIMENSIONS.CAR_HEIGHT;
+    
+    for (const obstacle of currentLevelData.obstacles) {
+        // No verificar colisiones con obstáculos que estén después de la meta (en distancia absoluta)
+        if (obstacle.distance >= currentLevelData.goalDistance) {
+            continue;
+        }
+        
+        // Calcular posición X del obstáculo en pantalla
+        // Los obstáculos se posicionan basándose en la distancia relativa al coche
+        // Usamos carFixedX como referencia y calculamos la posición relativa
+        const distanceFromCar = obstacle.distance - currentDistance;
+        const obstacleScreenX = carFixedX + distanceFromCar * SPEED.PIXELS_PER_DISTANCE_UNIT;
+        
+        // Verificar si el obstáculo está en pantalla (entre -width y canvas.width)
+        // Y asegurarse de que el obstáculo no esté después de la meta en términos de posición actual
+        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < canvas.width && obstacle.distance < currentLevelData.goalDistance) {
+            // Verificar colisión: el coche está fijo en carFixedX, el obstáculo se mueve
+            const carLeft = carFixedX;
+            const carRight = carFixedX + carWidth;
+            const carTop = carY;
+            const carBottom = carY + carHeight;
+            
+            const obstacleLeft = obstacleScreenX;
+            const obstacleRight = obstacleScreenX + obstacle.width;
+            const obstacleTop = obstacle.y;
+            const obstacleBottom = obstacle.y + obstacle.height;
+            
+            // Colisión AABB (Axis-Aligned Bounding Box)
+            if (carRight > obstacleLeft &&
+                carLeft < obstacleRight &&
+                carBottom > obstacleTop &&
+                carTop < obstacleBottom) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Verificar si llegó a la meta (colisión con la bandera)
+function checkGoalReached() {
+    const carWidth = DIMENSIONS.CAR_WIDTH;
+    const carHeight = DIMENSIONS.CAR_HEIGHT;
+    const goalY = POSITIONS.GOAL_Y;
+    const goalWidth = DIMENSIONS.GOAL_WIDTH;
+    const goalHeight = DIMENSIONS.GOAL_HEIGHT;
+    
+    // Calcular posición X de la meta en pantalla
+    // La meta se posiciona basándose en la distancia relativa al coche
+    // Cuando currentDistance = goalDistance, la meta debe estar en carFixedX
+    const distanceFromCar = currentLevelData.goalDistance - currentDistance;
+    const goalScreenX = carFixedX + distanceFromCar * SPEED.PIXELS_PER_DISTANCE_UNIT;
+    
+    // Verificar si la meta está cerca del coche (dentro de un rango razonable)
+    if (goalScreenX + goalWidth < carFixedX - COLLISION.GOAL_DETECTION_RANGE || goalScreenX > carFixedX + carWidth + COLLISION.GOAL_DETECTION_RANGE) {
+        return false; // La meta está demasiado lejos
+    }
+    
+    // Verificar colisión real con la bandera usando AABB
+    const carLeft = carFixedX;
+    const carRight = carFixedX + carWidth;
+    const carTop = carY;
+    const carBottom = carY + carHeight;
+    
+    const goalLeft = goalScreenX;
+    const goalRight = goalScreenX + goalWidth;
+    const goalTop = goalY;
+    const goalBottom = goalY + goalHeight;
+    
+    // Colisión AABB: el coche debe estar intersectando con la bandera
+    return (carRight > goalLeft &&
+            carLeft < goalRight &&
+            carBottom > goalTop &&
+            carTop < goalBottom);
+}
+
+// Dibujar en el canvas
+function draw() {
+    if (!canvas || !ctx) return;
+    
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dibujar fondo
+    drawBackground();
+    
+    // Dibujar carretera
+    drawRoad();
+    
+    // Dibujar obstáculos
+    drawObstacles();
+    
+    // Dibujar meta
+    drawGoal();
+    
+    // Dibujar coche (solo si no ha explotado)
+    if (!explosionActive) {
+        drawCar();
+    }
+    
+    // Dibujar explosión si está activa
+    if (explosionActive) {
+        drawExplosion();
+    }
+    
+    // Dibujar nubes
+    drawClouds();
+    
+    // Dibujar botones dentro del canvas (solo iconografías)
+    drawCanvasButtons();
+}
+
+// Dibujar botones dentro del canvas
+function drawCanvasButtons() {
+    if (!canvas || !ctx) return;
+    
+    const buttonSize = UI.BUTTON_SIZE;
+    const padding = UI.BUTTON_PADDING;
+    
+    // Botón de cambiar coche (esquina superior derecha)
+    const changeX = canvas.width - padding - buttonSize;
+    const changeY = padding;
+    
+    // Fondo del botón
+    ctx.fillStyle = 'rgba(162, 155, 254, 0.8)';
+    ctx.beginPath();
+    ctx.arc(changeX + buttonSize/2, changeY + buttonSize/2, buttonSize/2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Borde
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Icono de cambiar coche
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
+    
+    // Información del nivel (esquina inferior izquierda)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillRect(padding, canvas.height - 60, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
+    ctx.strokeStyle = '#2d3436';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(padding, canvas.height - 60, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
+    
+    ctx.fillStyle = '#2d3436';
+    ctx.font = `bold ${UI.LEVEL_INFO_FONT_SIZE}px Comic Sans MS`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, canvas.height - 35);
+}
+
+// Dibujar fondo
+function drawBackground() {
+    // Cielo
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, '#87ceeb');
+    skyGradient.addColorStop(0.5, '#98d8c8');
+    skyGradient.addColorStop(1, '#f7dc6f');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Sol (usando sprite)
+    if (sprites.sun) {
+        ctx.drawImage(sprites.sun, 1050, 30, 100, 100);
+    } else {
+        // Fallback si el sprite no está cargado
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(1100, 80, 50, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Dibujar nubes
+function drawClouds() {
+    if (sprites.cloud) {
+        // Dibujar nubes usando sprite
+        ctx.drawImage(sprites.cloud, 150, 70, 100, 60);
+        ctx.drawImage(sprites.cloud, 450, 120, 100, 60);
+        ctx.drawImage(sprites.cloud, 750, 90, 100, 60);
+    } else {
+        // Fallback si el sprite no está cargado
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        drawCloud(200, 100);
+        drawCloud(500, 150);
+        drawCloud(800, 120);
+    }
+}
+
+function drawCloud(x, y) {
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.arc(x + 25, y, 35, 0, Math.PI * 2);
+    ctx.arc(x + 50, y, 30, 0, Math.PI * 2);
+    ctx.arc(x + 25, y - 20, 25, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Dibujar carretera con scroll
+function drawRoad() {
+    // Carretera principal
+    ctx.fillStyle = '#555';
+    ctx.fillRect(0, POSITIONS.ROAD_Y, canvas.width, POSITIONS.ROAD_HEIGHT);
+    
+    // Líneas de la carretera con scroll
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([20, 20]);
+    ctx.beginPath();
+    const lineOffset = roadScrollX % SPEED.ROAD_LINE_OFFSET;
+    const roadCenterY = POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT / 2;
+    ctx.moveTo(-lineOffset, roadCenterY);
+    ctx.lineTo(canvas.width - lineOffset, roadCenterY);
+    ctx.moveTo(-lineOffset + SPEED.ROAD_LINE_OFFSET, roadCenterY);
+    ctx.lineTo(canvas.width - lineOffset + SPEED.ROAD_LINE_OFFSET, roadCenterY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Bordes de la carretera
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, POSITIONS.ROAD_Y);
+    ctx.lineTo(canvas.width, POSITIONS.ROAD_Y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT);
+    ctx.lineTo(canvas.width, POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT);
+    ctx.stroke();
+}
+
+// Dibujar obstáculos
+function drawObstacles() {
+    // No dibujar obstáculos si el coche ya pasó la meta
+    if (currentDistance >= currentLevelData.goalDistance) {
+        return;
+    }
+    
+    currentLevelData.obstacles.forEach((obstacle, index) => {
+        // No dibujar obstáculos que estén después de la meta (en distancia absoluta)
+        if (obstacle.distance >= currentLevelData.goalDistance) {
+            return;
+        }
+        
+        // Calcular posición X del obstáculo en pantalla
+        // Los obstáculos se posicionan basándose en la distancia relativa al coche
+        // Usamos carFixedX como referencia y calculamos la posición relativa
+        const distanceFromCar = obstacle.distance - currentDistance;
+        const obstacleScreenX = carFixedX + distanceFromCar * SPEED.PIXELS_PER_DISTANCE_UNIT;
+        
+        // Solo dibujar si el obstáculo está en pantalla (entre -width y canvas.width)
+        // Y asegurarse de que el obstáculo no esté después de la meta en términos de posición actual
+        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < canvas.width && obstacle.distance < currentLevelData.goalDistance) {
+            if (sprites.obstacle) {
+                // Dibujar obstáculo usando sprite
+                ctx.drawImage(sprites.obstacle, obstacleScreenX, obstacle.y, obstacle.width, obstacle.height);
+            } else {
+                // Fallback si el sprite no está cargado
+                // Sombra
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(obstacleScreenX + 5, obstacle.y + obstacle.height, obstacle.width - 10, 5);
+                
+                // Cuerpo del obstáculo (roca)
+                ctx.fillStyle = '#8b4513';
+                ctx.fillRect(obstacleScreenX, obstacle.y, obstacle.width, obstacle.height);
+                
+                // Detalles de la roca (textura)
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(obstacleScreenX + 10, obstacle.y + 5, obstacle.width - 20, obstacle.height - 10);
+            }
+            
+            // Señal de peligro (emoji de advertencia)
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
+        }
+    });
+}
+
+// Dibujar meta estilo carreras (bandera a cuadros)
+function drawGoal() {
+    const distanceToGoal = currentLevelData.goalDistance - currentDistance;
+    // La meta debe estar en la misma posición que en checkGoalReached
+    // Cuando currentDistance = goalDistance, la meta debe estar en carFixedX
+    const distanceFromCar = currentLevelData.goalDistance - currentDistance;
+    const goalScreenX = carFixedX + distanceFromCar * SPEED.PIXELS_PER_DISTANCE_UNIT;
+    const goalY = POSITIONS.GOAL_Y;
+    const goalWidth = DIMENSIONS.GOAL_WIDTH;
+    const goalHeight = DIMENSIONS.GOAL_HEIGHT;
+    
+    // Dibujar la meta cuando está visible en pantalla o cerca
+    if (goalScreenX + goalWidth > -GOAL_VISUAL.DRAW_RANGE_BEFORE && goalScreenX < canvas.width + GOAL_VISUAL.DRAW_RANGE_AFTER) {
+        // Poste de la bandera
+        ctx.fillStyle = '#2d3436';
+        ctx.fillRect(goalScreenX - DIMENSIONS.GOAL_POLE_WIDTH, goalY, DIMENSIONS.GOAL_POLE_WIDTH, goalHeight + DIMENSIONS.GOAL_POLE_HEIGHT_EXTRA);
+        
+        // Bandera a cuadros estilo carreras (checkered flag)
+        const squareSize = GOAL_VISUAL.CHECKERED_SQUARE_SIZE;
+        const rows = Math.ceil(goalHeight / squareSize);
+        const cols = Math.ceil(goalWidth / squareSize);
+        
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                const x = goalScreenX + col * squareSize;
+                const y = goalY + row * squareSize;
+                
+                // Alternar colores en patrón de ajedrez
+                if ((row + col) % 2 === 0) {
+                    ctx.fillStyle = '#ffffff';
+                } else {
+                    ctx.fillStyle = '#000000';
+                }
+                
+                ctx.fillRect(x, y, squareSize, squareSize);
+            }
+        }
+        
+        // Borde de la bandera
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(goalScreenX, goalY, goalWidth, goalHeight);
+        
+        // Arco de meta decorativo
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(goalScreenX + goalWidth / 2, goalY + goalHeight, GOAL_VISUAL.ARCH_RADIUS, Math.PI, 0);
+        ctx.stroke();
+        
+        // Texto "META" con efecto
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 24px Comic Sans MS';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText('META', goalScreenX + goalWidth / 2, goalY - GOAL_VISUAL.TEXT_OFFSET_Y);
+        ctx.fillText('META', goalScreenX + goalWidth / 2, goalY - GOAL_VISUAL.TEXT_OFFSET_Y);
+    }
+}
+
+function drawStar(x, y, outerRadius, innerRadius) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+        const angle = (i * Math.PI) / 5;
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
+// Explosión del coche
+function explodeCar() {
+    if (explosionActive) return;
+    
+    explosionActive = true;
+    isJumping = false;
+    gameState = 'exploded';
+    
+    // Guardar posición donde explotó (centro del coche, limitado al canvas)
+    const carWidth = DIMENSIONS.CAR_WIDTH;
+    const carHeight = DIMENSIONS.CAR_HEIGHT;
+    const explosionX = Math.max(carWidth/2, Math.min(canvas.width - carWidth/2, carFixedX + carWidth/2));
+    const explosionY = Math.max(carHeight/2, Math.min(canvas.height - carHeight/2, carY + carHeight/2));
+    
+    // Crear partículas de explosión
+    explosionParticles = [];
+    const colors = ['#ff6b6b', '#ffd700', '#ff8c00', '#ff4500', '#ffff00'];
+    
+    for (let i = 0; i < 30; i++) {
+        explosionParticles.push({
+            x: explosionX,
+            y: explosionY,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            life: 1.0,
+            decay: Math.random() * 0.02 + 0.01
+        });
+    }
+    
+    // Animar explosión
+    animateExplosion();
+}
+
+// Animar explosión
+function animateExplosion() {
+    if (!explosionActive) return;
+    
+    let allDead = true;
+    
+    for (let particle of explosionParticles) {
+        if (particle.life > 0) {
+            allDead = false;
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vy += 0.5; // Gravedad
+            particle.life -= particle.decay;
+        }
+    }
+    
+    draw();
+    
+    if (allDead) {
+        // La explosión terminó
+        explosionActive = false;
+        gameState = 'lost';
+        showMessage('💥 ¡BOOM! 💥', 'El coche explotó al salirse del camino. ¡Elige mejor el coche para este nivel!');
+    } else {
+        requestAnimationFrame(animateExplosion);
+    }
+}
+
+// Dibujar explosión
+function drawExplosion() {
+    for (let particle of explosionParticles) {
+        if (particle.life > 0) {
+            ctx.save();
+            ctx.globalAlpha = particle.life;
+            ctx.fillStyle = particle.color;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+    
+    // Dibujar centro de la explosión (llama)
+    if (explosionParticles.length > 0 && explosionParticles[0].life > 0.5) {
+        const centerX = explosionParticles[0].x;
+        const centerY = explosionParticles[0].y;
+        
+        // Círculo de fuego central
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 40);
+        gradient.addColorStop(0, '#ffff00');
+        gradient.addColorStop(0.5, '#ff8c00');
+        gradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Dibujar coche
+function drawCar() {
+    const carWidth = DIMENSIONS.CAR_WIDTH;
+    const carHeight = DIMENSIONS.CAR_HEIGHT; // Aumentado para monster trucks
+    
+    // Sombra del coche (solo cuando está en el suelo)
+    if (carY >= POSITIONS.GROUND_LEVEL && sprites.carShadow) {
+        ctx.drawImage(sprites.carShadow, carFixedX, carY + carHeight + DIMENSIONS.CAR_SHADOW_OFFSET, DIMENSIONS.CAR_SHADOW_WIDTH, DIMENSIONS.CAR_SHADOW_HEIGHT);
+    } else if (carY >= POSITIONS.GROUND_LEVEL) {
+        // Fallback si el sprite no está cargado
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(carFixedX + carWidth / 2, carY + carHeight + DIMENSIONS.CAR_SHADOW_OFFSET, carWidth / 2, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Efecto de movimiento (líneas de velocidad) - solo cuando salta
+    if (isJumping) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(carFixedX - 20 - i * 15, carY + 10 + i * 5);
+            ctx.lineTo(carFixedX - 10 - i * 15, carY + 15 + i * 5);
+            ctx.stroke();
+        }
+    }
+    
+    // Dibujar coche usando sprite
+    if (selectedCar && sprites.cars[selectedCar.id]) {
+        ctx.drawImage(sprites.cars[selectedCar.id], carFixedX, carY, carWidth, carHeight);
+    } else {
+        // Fallback si el sprite no está cargado
+        // Cuerpo del coche
+        ctx.fillStyle = selectedCar ? selectedCar.color : '#ff6b6b';
+        ctx.fillRect(carFixedX, carY, carWidth, carHeight);
+        
+        // Ventanas
+        ctx.fillStyle = '#87ceeb';
+        ctx.fillRect(carFixedX + 10, carY + 5, 15, 15);
+        ctx.fillRect(carFixedX + 35, carY + 5, 15, 15);
+        
+        // Brillo en las ventanas
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(carFixedX + 12, carY + 7, 5, 5);
+        ctx.fillRect(carFixedX + 37, carY + 7, 5, 5);
+        
+        // Ruedas
+        ctx.fillStyle = '#2d3436';
+        ctx.beginPath();
+        ctx.arc(carFixedX + 15, carY + carHeight, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(carFixedX + 45, carY + carHeight, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Detalles de las ruedas
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(carFixedX + 15, carY + carHeight, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(carFixedX + 45, carY + carHeight, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Detalles decorativos
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(carFixedX + 5, carY + 10, carWidth - 10, 10);
+        
+        // Ojos del coche (para hacerlo más amigable)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(carFixedX + 15, carY + 15, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(carFixedX + 45, carY + 15, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(carFixedX + 15, carY + 15, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(carFixedX + 45, carY + 15, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Sonrisa cuando está saltando
+        if (isJumping) {
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(carFixedX + 30, carY + 25, 8, 0, Math.PI);
+            ctx.stroke();
+        }
+    }
+}
+
+// Mostrar mensaje
+function showMessage(title, text, showNextLevel = false) {
+    document.getElementById('messageTitle').textContent = title;
+    document.getElementById('messageText').textContent = text;
+    document.getElementById('nextLevelButton').style.display = showNextLevel ? 'inline-block' : 'none';
+    document.getElementById('messageOverlay').style.display = 'flex';
+}
+
+// Reiniciar juego
+function resetGame() {
+    carY = POSITIONS.CAR_INITIAL_Y;
+    carVx = 0;
+    carVy = 0;
+    isJumping = false;
+    explosionActive = false;
+    explosionParticles = [];
+    currentDistance = 0;
+    roadScrollX = 0;
+    attempts = 0;
+    gameState = selectedCar ? 'playing' : 'selecting';
+    
+    if (selectedCar) {
+        // Reestablecer valores del coche seleccionado para mantener consistencia
+        angle = selectedCar.baseAngle;
+        speed = selectedCar.baseSpeed;
+        acceleration = selectedCar.baseAcceleration;
+        
+        // Reaplicar tema al reiniciar
+        applyCarTheme(selectedCar);
+        draw();
+        // Iniciar el bucle del juego automáticamente si está en estado playing
+        // Solo iniciar si no hay un bucle ya ejecutándose
+        if (gameState === 'playing' && !gameLoopRunning) {
+            gameLoop();
+        }
+    }
+}
+
+// Siguiente nivel
+function nextLevel() {
+    if (currentLevel < levels.length) {
+        currentLevel++;
+        currentLevelData = levels[currentLevel - 1];
+        attempts = 0;
+        currentDistance = 0;
+        roadScrollX = 0;
+        resetGame();
+    } else {
+        showMessage('¡Felicidades! 🏆', '¡Completaste todos los niveles! ¡Eres un campeón!', false);
+    }
+}
+
+// Inicializar cuando se carga la página
+init();

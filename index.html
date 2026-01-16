@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>¡Salta el Coche! 🚗</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🔥 Monster Trucks Hot Wheels 🔥</h1>
+        </div>
+        
+        <div class="main-content">
+            <!-- Panel de selección de coche -->
+            <div class="car-selection-panel" id="carSelectionPanel">
+                <h2>Elige tu coche</h2>
+                <div class="cars-grid" id="carsGrid"></div>
+            </div>
+
+            <!-- Panel de juego -->
+            <div class="game-panel" id="gamePanel" style="display: none;">
+                <canvas id="gameCanvas" width="1200" height="600"></canvas>
+            </div>
+        </div>
+
+        <!-- Mensaje de victoria/derrota -->
+        <div class="message-overlay" id="messageOverlay" style="display: none;">
+            <div class="message-content">
+                <h2 id="messageTitle"></h2>
+                <p id="messageText"></p>
+                <button id="nextLevelButton" style="display: none;">Siguiente Nivel</button>
+                <button id="retryButton">Intentar de Nuevo</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

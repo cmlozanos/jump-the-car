@@ -1,0 +1,26 @@
+<svg width="60" height="50" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monster Truck estilo Hot Wheels - Amarillo neón -->
+  <!-- Cuerpo principal -->
+  <rect x="5" y="15" width="50" height="20" fill="#ffd700" rx="3"/>
+  <!-- Cabina -->
+  <rect x="12" y="8" width="18" height="12" fill="#ff8c00" rx="2"/>
+  <!-- Ventana -->
+  <rect x="14" y="10" width="14" height="8" fill="#1e90ff" rx="1"/>
+  <!-- Brillo ventana -->
+  <rect x="16" y="11" width="4" height="3" fill="rgba(255,255,255,0.6)"/>
+  <!-- Ruedas grandes (monster truck) -->
+  <circle cx="12" cy="42" r="10" fill="#1a1a1a"/>
+  <circle cx="48" cy="42" r="10" fill="#1a1a1a"/>
+  <!-- Detalles de ruedas -->
+  <circle cx="12" cy="42" r="7" fill="#333"/>
+  <circle cx="48" cy="42" r="7" fill="#333"/>
+  <circle cx="12" cy="42" r="4" fill="#555"/>
+  <circle cx="48" cy="42" r="4" fill="#555"/>
+  <!-- Diseño tipo rayo -->
+  <path d="M 20 18 L 25 20 L 22 22 L 30 22 L 27 24 L 35 26 L 30 28 L 20 28 Z" fill="#ff4500"/>
+  <!-- Número de carreras -->
+  <text x="30" y="28" font-family="Arial Black" font-size="8" fill="#000000" text-anchor="middle" font-weight="bold">3</text>
+  <!-- Suspensión -->
+  <rect x="8" y="32" width="3" height="8" fill="#444"/>
+  <rect x="49" y="32" width="3" height="8" fill="#444"/>
+</svg>
