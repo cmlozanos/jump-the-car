@@ -1518,41 +1518,177 @@ function drawCanvasButtons() {
     ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 25);
 }
 
+// Temas de fondo por nivel (cambia cada 2 niveles)
+const backgroundThemes = [
+    // Niveles 1-2: Día soleado
+    {
+        skyColors: ['#87ceeb', '#98d8c8', '#f7dc6f'],
+        sunColor: '#ffd700',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 3,
+        timeOfDay: 'day'
+    },
+    // Niveles 3-4: Atardecer
+    {
+        skyColors: ['#ff6b6b', '#ffa500', '#ffd700', '#ff6347'],
+        sunColor: '#ff8c00',
+        sunPosition: { x: 1000, y: 150 },
+        cloudCount: 4,
+        timeOfDay: 'sunset'
+    },
+    // Niveles 5-6: Noche estrellada
+    {
+        skyColors: ['#191970', '#1a1a2e', '#0f3460'],
+        sunColor: '#f0e68c',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 2,
+        timeOfDay: 'night',
+        stars: true
+    },
+    // Niveles 7-8: Amanecer
+    {
+        skyColors: ['#ff69b4', '#ffb6c1', '#ffd700', '#87ceeb'],
+        sunColor: '#ff4500',
+        sunPosition: { x: 200, y: 100 },
+        cloudCount: 3,
+        timeOfDay: 'sunrise'
+    },
+    // Niveles 9-10: Día nublado
+    {
+        skyColors: ['#b0c4de', '#d3d3d3', '#c0c0c0'],
+        sunColor: '#d3d3d3',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 5,
+        timeOfDay: 'cloudy'
+    },
+    // Niveles 11-12: Día tropical
+    {
+        skyColors: ['#4ecdc4', '#44a08d', '#f7b733'],
+        sunColor: '#ffd700',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 2,
+        timeOfDay: 'day'
+    },
+    // Niveles 13-14: Atardecer púrpura
+    {
+        skyColors: ['#667eea', '#764ba2', '#f093fb'],
+        sunColor: '#ff6b9d',
+        sunPosition: { x: 1000, y: 150 },
+        cloudCount: 3,
+        timeOfDay: 'sunset'
+    },
+    // Niveles 15-16: Noche azul profundo
+    {
+        skyColors: ['#0c0c0c', '#1a237e', '#283593'],
+        sunColor: '#ffffff',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 1,
+        timeOfDay: 'night',
+        stars: true
+    },
+    // Niveles 17-18: Día desértico
+    {
+        skyColors: ['#ffeaa7', '#fdcb6e', '#e17055'],
+        sunColor: '#ff7675',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 0,
+        timeOfDay: 'day'
+    },
+    // Niveles 19-20: Tormenta
+    {
+        skyColors: ['#636e72', '#2d3436', '#000000'],
+        sunColor: '#95a5a6',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 6,
+        timeOfDay: 'cloudy'
+    }
+];
+
+// Obtener tema de fondo según el nivel (cambia cada 2 niveles)
+function getBackgroundTheme(level) {
+    const themeIndex = Math.min(Math.floor((level - 1) / 2), backgroundThemes.length - 1);
+    return backgroundThemes[themeIndex];
+}
+
 // Dibujar fondo
 function drawBackground() {
-    // Cielo
+    const theme = getBackgroundTheme(currentLevel);
+    
+    // Cielo con gradiente según el tema
     const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    skyGradient.addColorStop(0, '#87ceeb');
-    skyGradient.addColorStop(0.5, '#98d8c8');
-    skyGradient.addColorStop(1, '#f7dc6f');
+    theme.skyColors.forEach((color, index) => {
+        skyGradient.addColorStop(index / (theme.skyColors.length - 1), color);
+    });
     ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Sol (usando sprite)
+    // Estrellas para tema nocturno
+    if (theme.stars) {
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 50; i++) {
+            const x = (i * 37) % canvas.width;
+            const y = (i * 23) % (canvas.height / 2);
+            const size = Math.random() * 2 + 1;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Sol/Luna según el tema
     if (sprites.sun) {
-        ctx.drawImage(sprites.sun, 1050, 30, 100, 100);
+        const sunSize = theme.timeOfDay === 'night' ? 80 : 100;
+        ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
+        ctx.drawImage(sprites.sun, theme.sunPosition.x, theme.sunPosition.y, sunSize, sunSize);
+        ctx.globalAlpha = 1;
     } else {
         // Fallback si el sprite no está cargado
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = theme.sunColor;
+        ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
+        const sunSize = theme.timeOfDay === 'night' ? 40 : 50;
         ctx.beginPath();
-        ctx.arc(1100, 80, 50, 0, Math.PI * 2);
+        ctx.arc(theme.sunPosition.x + sunSize, theme.sunPosition.y + sunSize, sunSize, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = 1;
     }
 }
 
 // Dibujar nubes
 function drawClouds() {
+    const theme = getBackgroundTheme(currentLevel);
+    const cloudOpacity = theme.timeOfDay === 'night' ? 0.3 : (theme.timeOfDay === 'cloudy' ? 0.9 : 0.8);
+    
     if (sprites.cloud) {
-        // Dibujar nubes usando sprite
-        ctx.drawImage(sprites.cloud, 150, 70, 100, 60);
-        ctx.drawImage(sprites.cloud, 450, 120, 100, 60);
-        ctx.drawImage(sprites.cloud, 750, 90, 100, 60);
+        // Dibujar nubes usando sprite según el tema
+        const cloudPositions = [
+            { x: 150, y: 70 },
+            { x: 450, y: 120 },
+            { x: 750, y: 90 },
+            { x: 300, y: 50 },
+            { x: 900, y: 100 }
+        ];
+        
+        ctx.globalAlpha = cloudOpacity;
+        for (let i = 0; i < theme.cloudCount; i++) {
+            const pos = cloudPositions[i % cloudPositions.length];
+            ctx.drawImage(sprites.cloud, pos.x, pos.y, 100, 60);
+        }
+        ctx.globalAlpha = 1;
     } else {
         // Fallback si el sprite no está cargado
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        drawCloud(200, 100);
-        drawCloud(500, 150);
-        drawCloud(800, 120);
+        ctx.fillStyle = `rgba(255, 255, 255, ${cloudOpacity})`;
+        const cloudPositions = [
+            { x: 200, y: 100 },
+            { x: 500, y: 150 },
+            { x: 800, y: 120 },
+            { x: 350, y: 80 },
+            { x: 950, y: 130 }
+        ];
+        
+        for (let i = 0; i < theme.cloudCount; i++) {
+            const pos = cloudPositions[i % cloudPositions.length];
+            drawCloud(pos.x, pos.y);
+        }
     }
 }
 
