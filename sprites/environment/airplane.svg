@@ -1,0 +1,37 @@
+<svg width="80" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Avión estilo dibujo animado -->
+  <!-- Cuerpo principal del avión -->
+  <ellipse cx="40" cy="20" rx="35" ry="8" fill="#87ceeb"/>
+  <ellipse cx="40" cy="20" rx="30" ry="6" fill="#b0e0e6"/>
+  
+  <!-- Ala superior -->
+  <path d="M 20 15 L 35 5 L 50 15 L 45 20 L 20 20 Z" fill="#4682b4"/>
+  <path d="M 22 16 L 35 8 L 48 16 L 43 19 L 22 19 Z" fill="#5f9ea0"/>
+  
+  <!-- Ala inferior -->
+  <path d="M 20 20 L 35 30 L 50 20 L 45 25 L 20 25 Z" fill="#4682b4"/>
+  <path d="M 22 21 L 35 28 L 48 21 L 43 24 L 22 24 Z" fill="#5f9ea0"/>
+  
+  <!-- Cola del avión -->
+  <path d="M 10 18 L 15 12 L 18 18 L 15 22 Z" fill="#4682b4"/>
+  <path d="M 12 18 L 15 14 L 17 18 L 15 20 Z" fill="#5f9ea0"/>
+  
+  <!-- Ventanas -->
+  <circle cx="30" cy="20" r="3" fill="#1e90ff"/>
+  <circle cx="40" cy="20" r="3" fill="#1e90ff"/>
+  <circle cx="50" cy="20" r="3" fill="#1e90ff"/>
+  
+  <!-- Brillo en las ventanas -->
+  <circle cx="30" cy="19" r="1" fill="#87ceeb"/>
+  <circle cx="40" cy="19" r="1" fill="#87ceeb"/>
+  <circle cx="50" cy="19" r="1" fill="#87ceeb"/>
+  
+  <!-- Hélice (opcional, decorativa) -->
+  <circle cx="70" cy="20" r="4" fill="#ffd700"/>
+  <line x1="70" y1="16" x2="70" y2="24" stroke="#ff8c00" stroke-width="1"/>
+  <line x1="66" y1="20" x2="74" y2="20" stroke="#ff8c00" stroke-width="1"/>
+  
+  <!-- Detalles decorativos -->
+  <line x1="25" y1="20" x2="55" y2="20" stroke="#fff" stroke-width="1" opacity="0.5"/>
+  <ellipse cx="40" cy="20" rx="25" ry="4" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+</svg>

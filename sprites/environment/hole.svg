@@ -1,0 +1,26 @@
+<svg width="60" height="30" xmlns="http://www.w3.org/2000/svg">
+  <!-- Agujero en el suelo -->
+  <!-- Borde exterior del agujero -->
+  <ellipse cx="30" cy="15" rx="28" ry="12" fill="#2d3436"/>
+  
+  <!-- Interior del agujero (más oscuro) -->
+  <ellipse cx="30" cy="15" rx="25" ry="10" fill="#1a1a1a"/>
+  
+  <!-- Profundidad (gradiente oscuro) -->
+  <ellipse cx="30" cy="18" rx="20" ry="8" fill="#000000"/>
+  
+  <!-- Detalles de textura en el borde -->
+  <ellipse cx="30" cy="8" rx="28" ry="3" fill="#3d3d3d" opacity="0.5"/>
+  <ellipse cx="30" cy="22" rx="28" ry="3" fill="#1a1a1a" opacity="0.7"/>
+  
+  <!-- Pequeñas rocas/grava alrededor del borde -->
+  <circle cx="8" cy="10" r="2" fill="#555"/>
+  <circle cx="52" cy="10" r="2" fill="#555"/>
+  <circle cx="5" cy="18" r="1.5" fill="#444"/>
+  <circle cx="55" cy="18" r="1.5" fill="#444"/>
+  <circle cx="10" cy="22" r="1.5" fill="#444"/>
+  <circle cx="50" cy="22" r="1.5" fill="#444"/>
+  
+  <!-- Sombra alrededor del agujero -->
+  <ellipse cx="30" cy="15" rx="30" ry="14" fill="rgba(0,0,0,0.2)"/>
+</svg>

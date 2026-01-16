@@ -1,0 +1,24 @@
+<svg width="50" height="60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Árbol estilo dibujo animado -->
+  <!-- Tronco -->
+  <rect x="20" y="40" width="10" height="20" fill="#8b4513" rx="2"/>
+  <rect x="21" y="41" width="8" height="18" fill="#654321" rx="1"/>
+  
+  <!-- Copa del árbol (círculo verde) -->
+  <circle cx="25" cy="35" r="18" fill="#228b22"/>
+  <circle cx="25" cy="35" r="15" fill="#32cd32"/>
+  
+  <!-- Detalles de hojas (círculos más pequeños) -->
+  <circle cx="18" cy="30" r="8" fill="#228b22"/>
+  <circle cx="32" cy="30" r="8" fill="#228b22"/>
+  <circle cx="25" cy="25" r="10" fill="#228b22"/>
+  <circle cx="15" cy="35" r="7" fill="#32cd32"/>
+  <circle cx="35" cy="35" r="7" fill="#32cd32"/>
+  
+  <!-- Detalles de textura en el tronco -->
+  <line x1="23" y1="45" x2="23" y2="58" stroke="#654321" stroke-width="1"/>
+  <line x1="27" y1="45" x2="27" y2="58" stroke="#654321" stroke-width="1"/>
+  
+  <!-- Sombra en la base -->
+  <ellipse cx="25" cy="60" rx="8" ry="3" fill="rgba(0,0,0,0.3)"/>
+</svg>

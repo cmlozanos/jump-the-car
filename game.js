@@ -98,6 +98,10 @@ const sprites = {
     cars: {},
     carShadow: null,
     obstacle: null,
+    spikes: null,
+    tree: null,
+    hole: null,
+    airplane: null,
     goal: null,
     cloud: null,
     sun: null
@@ -116,16 +120,22 @@ function loadImage(src) {
 // Cargar todos los sprites
 async function loadSprites() {
     try {
-        // Cargar sprites de coches (5 coches disponibles)
-        for (let i = 1; i <= 5; i++) {
+        // Cargar sprites de coches (6 coches disponibles)
+        for (let i = 1; i <= 6; i++) {
             sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg`);
         }
         
         // Cargar sprite de sombra
         sprites.carShadow = await loadImage('sprites/cars/car_shadow.svg');
         
-        // Cargar sprites de ambiente
+        // Cargar sprites de obstáculos
         sprites.obstacle = await loadImage('sprites/environment/obstacle.svg');
+        sprites.spikes = await loadImage('sprites/environment/spikes.svg');
+        sprites.tree = await loadImage('sprites/environment/tree.svg');
+        sprites.hole = await loadImage('sprites/environment/hole.svg');
+        sprites.airplane = await loadImage('sprites/environment/airplane.svg');
+        
+        // Cargar sprites de ambiente
         sprites.goal = await loadImage('sprites/environment/goal.svg');
         sprites.cloud = await loadImage('sprites/environment/cloud.svg');
         sprites.sun = await loadImage('sprites/environment/sun.svg');
@@ -241,6 +251,22 @@ const cars = [
             gradient: 'linear-gradient(135deg, #ff0000 0%, #ff7f00 25%, #ffff00 50%, #00ff00 75%, #0000ff 100%)',
             icon: '🌈'
         }
+    },
+    {
+        id: 6,
+        name: 'Shadow Beast ⚫',
+        color: '#1a1a1a',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Negro',
+        theme: {
+            primary: '#1a1a1a',
+            secondary: '#2d2d2d',
+            accent: '#c0c0c0',
+            gradient: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+            icon: '⚫'
+        }
     }
 ];
 
@@ -258,121 +284,121 @@ const levels = [
     {
         goalDistance: 3000,
         obstacles: [
-            { distance: 600, y: 520, width: 35, height: 20 },
-            { distance: 1200, y: 480, width: 35, height: 20 },
-            { distance: 1800, y: 520, width: 35, height: 20 },
-            { distance: 2400, y: 480, width: 35, height: 20 }
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2400, y: 520, width: 60, height: 30, type: 'hole' }
         ]
     },
     {
         goalDistance: 3500,
         obstacles: [
-            { distance: 500, y: 520, width: 30, height: 20 },
-            { distance: 1000, y: 480, width: 30, height: 20 },
-            { distance: 1500, y: 520, width: 30, height: 20 },
-            { distance: 2000, y: 480, width: 30, height: 20 },
-            { distance: 2500, y: 520, width: 30, height: 20 },
-            { distance: 3000, y: 480, width: 30, height: 20 }
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3000, y: 320, width: 80, height: 40, type: 'airplane' }
         ]
     },
     {
         goalDistance: 4000,
         obstacles: [
-            { distance: 500, y: 520, width: 30, height: 20 },
-            { distance: 1000, y: 480, width: 30, height: 20 },
-            { distance: 1500, y: 520, width: 30, height: 20 },
-            { distance: 2000, y: 480, width: 30, height: 20 },
-            { distance: 2500, y: 520, width: 30, height: 20 },
-            { distance: 3000, y: 480, width: 30, height: 20 },
-            { distance: 3500, y: 520, width: 30, height: 20 }
+            { distance: 500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 1000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' }
         ]
     },
     {
         goalDistance: 4500,
         obstacles: [
-            { distance: 600, y: 520, width: 28, height: 20 },
-            { distance: 1200, y: 480, width: 28, height: 20 },
-            { distance: 1800, y: 520, width: 28, height: 20 },
-            { distance: 2400, y: 480, width: 28, height: 20 },
-            { distance: 3000, y: 520, width: 28, height: 20 },
-            { distance: 3600, y: 480, width: 28, height: 20 },
-            { distance: 4200, y: 520, width: 28, height: 20 }
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2400, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3600, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
     },
     {
         goalDistance: 5000,
         obstacles: [
-            { distance: 500, y: 520, width: 28, height: 20 },
-            { distance: 1000, y: 480, width: 28, height: 20 },
-            { distance: 1500, y: 520, width: 28, height: 20 },
-            { distance: 2000, y: 480, width: 28, height: 20 },
-            { distance: 2500, y: 520, width: 28, height: 20 },
-            { distance: 3000, y: 480, width: 28, height: 20 },
-            { distance: 3500, y: 520, width: 28, height: 20 },
-            { distance: 4000, y: 480, width: 28, height: 20 },
-            { distance: 4500, y: 520, width: 28, height: 20 }
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4500, y: 380, width: 80, height: 40, type: 'airplane' }
         ]
     },
     {
         goalDistance: 5500,
         obstacles: [
-            { distance: 600, y: 520, width: 25, height: 20 },
-            { distance: 1200, y: 480, width: 25, height: 20 },
-            { distance: 1800, y: 520, width: 25, height: 20 },
-            { distance: 2400, y: 480, width: 25, height: 20 },
-            { distance: 3000, y: 520, width: 25, height: 20 },
-            { distance: 3600, y: 480, width: 25, height: 20 },
-            { distance: 4200, y: 520, width: 25, height: 20 },
-            { distance: 4800, y: 480, width: 25, height: 20 }
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4800, y: 340, width: 80, height: 40, type: 'airplane' }
         ]
     },
     {
         goalDistance: 6000,
         obstacles: [
-            { distance: 500, y: 520, width: 25, height: 20 },
-            { distance: 1000, y: 480, width: 25, height: 20 },
-            { distance: 1500, y: 520, width: 25, height: 20 },
-            { distance: 2000, y: 480, width: 25, height: 20 },
-            { distance: 2500, y: 520, width: 25, height: 20 },
-            { distance: 3000, y: 480, width: 25, height: 20 },
-            { distance: 3500, y: 520, width: 25, height: 20 },
-            { distance: 4000, y: 480, width: 25, height: 20 },
-            { distance: 4500, y: 520, width: 25, height: 20 },
-            { distance: 5000, y: 480, width: 25, height: 20 },
-            { distance: 5500, y: 520, width: 25, height: 20 }
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 5000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
     },
     {
         goalDistance: 6500,
         obstacles: [
-            { distance: 600, y: 520, width: 22, height: 20 },
-            { distance: 1200, y: 480, width: 22, height: 20 },
-            { distance: 1800, y: 520, width: 22, height: 20 },
-            { distance: 2400, y: 480, width: 22, height: 20 },
-            { distance: 3000, y: 520, width: 22, height: 20 },
-            { distance: 3600, y: 480, width: 22, height: 20 },
-            { distance: 4200, y: 520, width: 22, height: 20 },
-            { distance: 4800, y: 480, width: 22, height: 20 },
-            { distance: 5400, y: 520, width: 22, height: 20 },
-            { distance: 6000, y: 480, width: 22, height: 20 }
+            { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 3000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' }
         ]
     },
     {
         goalDistance: 7000,
         obstacles: [
-            { distance: 500, y: 520, width: 22, height: 20 },
-            { distance: 1000, y: 480, width: 22, height: 20 },
-            { distance: 1500, y: 520, width: 22, height: 20 },
-            { distance: 2000, y: 480, width: 22, height: 20 },
-            { distance: 2500, y: 520, width: 22, height: 20 },
-            { distance: 3000, y: 480, width: 22, height: 20 },
-            { distance: 3500, y: 520, width: 22, height: 20 },
-            { distance: 4000, y: 480, width: 22, height: 20 },
-            { distance: 4500, y: 520, width: 22, height: 20 },
-            { distance: 5000, y: 480, width: 22, height: 20 },
-            { distance: 5500, y: 520, width: 22, height: 20 },
-            { distance: 6000, y: 480, width: 22, height: 20 },
-            { distance: 6500, y: 520, width: 22, height: 20 }
+            { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 1000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2500, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
+            { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 5000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 6000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' }
         ]
     }
 ];
@@ -502,6 +528,125 @@ function playJumpSound() {
         oscillator2.stop(audioContext.currentTime + 0.1);
     } catch (e) {
         console.warn('Error al reproducir sonido de salto:', e);
+    }
+}
+
+// Reproducir sonido de choque/crash
+function playCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido principal de choque (ruido de baja frecuencia)
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sawtooth';
+        oscillator1.frequency.setValueAtTime(100, now); // Frecuencia baja para sonido grave
+        oscillator1.frequency.exponentialRampToValueAtTime(50, now + 0.2); // Bajar la frecuencia
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01); // Attack muy rápido
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.3); // Decay
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.3);
+        
+        // Sonido secundario (ruido de impacto)
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'square';
+        oscillator2.frequency.setValueAtTime(200, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.005);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.2);
+        
+        // Sonido de "clank" metálico
+        const oscillator3 = audioContext.createOscillator();
+        const gainNode3 = audioContext.createGain();
+        
+        oscillator3.type = 'triangle';
+        oscillator3.frequency.setValueAtTime(300, now);
+        oscillator3.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+        
+        gainNode3.gain.setValueAtTime(0, now);
+        gainNode3.gain.linearRampToValueAtTime(0.2, now + 0.01);
+        gainNode3.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        
+        oscillator3.connect(gainNode3);
+        gainNode3.connect(audioContext.destination);
+        
+        oscillator3.start(now);
+        oscillator3.stop(now + 0.15);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de choque:', e);
+    }
+}
+
+// Reproducir sonido de victoria/ganador
+function playWinSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Melodía ascendente de victoria (3 notas)
+        const notes = [523.25, 659.25, 783.99]; // Do, Mi, Sol (acorde mayor)
+        const durations = [0.15, 0.15, 0.3];
+        
+        notes.forEach((freq, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(freq, now + index * 0.15);
+            
+            gainNode.gain.setValueAtTime(0, now + index * 0.15);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + index * 0.15 + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + index * 0.15 + durations[index] - 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + index * 0.15 + durations[index]);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start(now + index * 0.15);
+            oscillator.stop(now + index * 0.15 + durations[index]);
+        });
+        
+        // Agregar un sonido de "fanfarria" al final
+        setTimeout(() => {
+            const fanfareOsc = audioContext.createOscillator();
+            const fanfareGain = audioContext.createGain();
+            
+            fanfareOsc.type = 'square';
+            fanfareOsc.frequency.setValueAtTime(880, audioContext.currentTime); // La agudo
+            
+            fanfareGain.gain.setValueAtTime(0, audioContext.currentTime);
+            fanfareGain.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.01);
+            fanfareGain.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.2);
+            fanfareGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+            
+            fanfareOsc.connect(fanfareGain);
+            fanfareGain.connect(audioContext.destination);
+            
+            fanfareOsc.start(audioContext.currentTime);
+            fanfareOsc.stop(audioContext.currentTime + 0.4);
+        }, 600);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de victoria:', e);
     }
 }
 
@@ -803,9 +948,12 @@ function startJump() {
     }
     
     // Verificar colisión antes de saltar (por si acaso)
-    if (checkObstacleCollisions()) {
+    const collisionType = checkObstacleCollisions();
+    if (collisionType) {
         gameState = 'lost';
-        showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+        playCrashSound(); // Reproducir sonido de choque
+        const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
+        showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
         return;
     }
     
@@ -889,15 +1037,19 @@ function update() {
             // Colisión con borde del canvas
             gameState = 'lost';
             isJumping = false;
+            playCrashSound(); // Reproducir sonido de choque
             showMessage('¡Oh no! 😢', 'Chocaste con el borde del camino. ¡Inténtalo de nuevo!');
             return;
         }
         
         // Verificar colisiones con obstáculos
-        if (checkObstacleCollisions()) {
+        const collisionType = checkObstacleCollisions();
+        if (collisionType) {
             gameState = 'lost';
             isJumping = false;
-            showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+            playCrashSound(); // Reproducir sonido de choque
+            const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
+            showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
             return;
         }
         
@@ -905,6 +1057,7 @@ function update() {
         if (checkGoalReached()) {
             gameState = 'won';
             isJumping = false;
+            playWinSound(); // Reproducir sonido de victoria
             showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
             return;
         }
@@ -932,15 +1085,19 @@ function update() {
         }
     } else if (gameState === 'playing') {
         // Verificar colisiones con obstáculos incluso cuando no está saltando (en el suelo)
-        if (checkObstacleCollisions()) {
+        const collisionType = checkObstacleCollisions();
+        if (collisionType) {
             gameState = 'lost';
-            showMessage('¡Oh no! 😢', 'Chocaste con un obstáculo. ¡Inténtalo de nuevo!');
+            playCrashSound(); // Reproducir sonido de choque
+            const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
+            showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
             return;
         }
         
         // Si no está saltando pero está en estado playing, verificar si llegó a la meta
         if (checkGoalReached()) {
             gameState = 'won';
+            playWinSound(); // Reproducir sonido de victoria
             showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
             return;
         }
@@ -961,11 +1118,20 @@ function update() {
     }
 }
 
+// Mapeo de tipos de obstáculos a mensajes
+const obstacleMessages = {
+    'spikes': 'pinchos',
+    'tree': 'un árbol',
+    'hole': 'un agujero',
+    'airplane': 'un avión',
+    'obstacle': 'una roca'
+};
+
 // Verificar colisiones con obstáculos
 function checkObstacleCollisions() {
     // No verificar colisiones si el coche ya pasó la meta
     if (currentDistance >= currentLevelData.goalDistance) {
-        return false;
+        return null;
     }
     
     const carWidth = DIMENSIONS.CAR_WIDTH;
@@ -1002,11 +1168,12 @@ function checkObstacleCollisions() {
                 carLeft < obstacleRight &&
                 carBottom > obstacleTop &&
                 carTop < obstacleBottom) {
-                return true;
+                // Retornar el tipo de obstáculo con el que chocó
+                return obstacle.type || 'obstacle';
             }
         }
     }
-    return false;
+    return null;
 }
 
 // Verificar si llegó a la meta (colisión con la bandera)
@@ -1111,17 +1278,17 @@ function drawCanvasButtons() {
     ctx.textBaseline = 'middle';
     ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
     
-    // Información del nivel (esquina inferior izquierda)
+    // Información del nivel (esquina superior izquierda)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillRect(padding, canvas.height - 60, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
+    ctx.fillRect(padding, padding, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
     ctx.strokeStyle = '#2d3436';
     ctx.lineWidth = 2;
-    ctx.strokeRect(padding, canvas.height - 60, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
+    ctx.strokeRect(padding, padding, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
     
     ctx.fillStyle = '#2d3436';
     ctx.font = `bold ${UI.LEVEL_INFO_FONT_SIZE}px Comic Sans MS`;
     ctx.textAlign = 'left';
-    ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, canvas.height - 35);
+    ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 25);
 }
 
 // Dibujar fondo
@@ -1226,9 +1393,32 @@ function drawObstacles() {
         // Solo dibujar si el obstáculo está en pantalla (entre -width y canvas.width)
         // Y asegurarse de que el obstáculo no esté después de la meta en términos de posición actual
         if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < canvas.width && obstacle.distance < currentLevelData.goalDistance) {
-            if (sprites.obstacle) {
-                // Dibujar obstáculo usando sprite
-                ctx.drawImage(sprites.obstacle, obstacleScreenX, obstacle.y, obstacle.width, obstacle.height);
+            // Determinar qué sprite usar según el tipo de obstáculo
+            const obstacleType = obstacle.type || 'obstacle'; // Por defecto 'obstacle' si no se especifica
+            let spriteToUse = null;
+            
+            switch(obstacleType) {
+                case 'spikes':
+                    spriteToUse = sprites.spikes;
+                    break;
+                case 'tree':
+                    spriteToUse = sprites.tree;
+                    break;
+                case 'hole':
+                    spriteToUse = sprites.hole;
+                    break;
+                case 'airplane':
+                    spriteToUse = sprites.airplane;
+                    break;
+                case 'obstacle':
+                default:
+                    spriteToUse = sprites.obstacle;
+                    break;
+            }
+            
+            if (spriteToUse) {
+                // Dibujar obstáculo usando sprite según su tipo
+                ctx.drawImage(spriteToUse, obstacleScreenX, obstacle.y, obstacle.width, obstacle.height);
             } else {
                 // Fallback si el sprite no está cargado
                 // Sombra
@@ -1244,10 +1434,13 @@ function drawObstacles() {
                 ctx.fillRect(obstacleScreenX + 10, obstacle.y + 5, obstacle.width - 20, obstacle.height - 10);
             }
             
-            // Señal de peligro (emoji de advertencia)
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
+            // Señal de peligro (emoji de advertencia) - solo para algunos tipos
+            if (obstacleType !== 'tree' && obstacleType !== 'airplane') {
+                // Los árboles son más altos y los aviones están en el aire, no necesitan el emoji arriba
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
+            }
         }
     });
 }
@@ -1337,6 +1530,9 @@ function explodeCar() {
     explosionActive = true;
     isJumping = false;
     gameState = 'exploded';
+    
+    // Reproducir sonido de choque cuando explota
+    playCrashSound();
     
     // Guardar posición donde explotó (centro del coche, limitado al canvas)
     const carWidth = DIMENSIONS.CAR_WIDTH;
