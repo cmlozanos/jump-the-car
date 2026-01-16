@@ -116,8 +116,8 @@ function loadImage(src) {
 // Cargar todos los sprites
 async function loadSprites() {
     try {
-        // Cargar sprites de coches (solo 2 coches ahora)
-        for (let i = 1; i <= 2; i++) {
+        // Cargar sprites de coches (5 coches disponibles)
+        for (let i = 1; i <= 5; i++) {
             sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg`);
         }
         
@@ -192,6 +192,54 @@ const cars = [
             accent: '#ff4500',
             gradient: 'linear-gradient(135deg, #ffd700 0%, #ff8c00 100%)',
             icon: '⚡'
+        }
+    },
+    {
+        id: 3,
+        name: 'Thunder Strike ⚡',
+        color: '#00bfff',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Azul',
+        theme: {
+            primary: '#00bfff',
+            secondary: '#0066cc',
+            accent: '#ffff00',
+            gradient: 'linear-gradient(135deg, #00bfff 0%, #0066cc 100%)',
+            icon: '⚡'
+        }
+    },
+    {
+        id: 4,
+        name: 'Neon Flash 💚',
+        color: '#00ff7f',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Verde',
+        theme: {
+            primary: '#00ff7f',
+            secondary: '#228b22',
+            accent: '#32cd32',
+            gradient: 'linear-gradient(135deg, #00ff7f 0%, #228b22 100%)',
+            icon: '💚'
+        }
+    },
+    {
+        id: 5,
+        name: 'Rainbow Rider 🌈',
+        color: '#ff00ff',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Multicolor',
+        theme: {
+            primary: '#ff00ff',
+            secondary: '#00ffff',
+            accent: '#ffff00',
+            gradient: 'linear-gradient(135deg, #ff0000 0%, #ff7f00 25%, #ffff00 50%, #00ff00 75%, #0000ff 100%)',
+            icon: '🌈'
         }
     }
 ];
