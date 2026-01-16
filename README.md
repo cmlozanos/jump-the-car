@@ -27,7 +27,68 @@ Un juego educativo y divertido para niños de 5 años donde deben ayudar a un co
 - Controles intuitivos con sliders visuales
 - Animaciones suaves y divertidas
 
-## 🚀 Instalación y Ejecución
+## 🌐 Publicación Gratuita en Internet
+
+### Opción 1: GitHub Pages (Recomendado - Más Fácil)
+
+GitHub Pages es completamente gratuito y se configura en minutos:
+
+1. **Habilita GitHub Pages en tu repositorio:**
+   - Ve a tu repositorio en GitHub: `https://github.com/tu-usuario/jump-the-car`
+   - Haz clic en **Settings** (Configuración)
+   - En el menú lateral, busca **Pages**
+   - En **Source** (Fuente), selecciona **Deploy from a branch**
+   - Selecciona la rama **main** (o **master** si es tu rama principal)
+   - Selecciona la carpeta **/ (root)**
+   - Haz clic en **Save**
+
+2. **Espera unos minutos** mientras GitHub procesa tu sitio
+
+3. **Tu juego estará disponible en:**
+   ```
+   https://tu-usuario.github.io/jump-the-car
+   ```
+   (Reemplaza `tu-usuario` con tu nombre de usuario de GitHub)
+
+4. **Actualizaciones automáticas:** Cada vez que hagas `git push` a la rama main, tu sitio se actualizará automáticamente en unos minutos.
+
+### Opción 2: Netlify (Muy Fácil - Despliegue Automático)
+
+1. Ve a [netlify.com](https://www.netlify.com) y crea una cuenta gratuita
+2. Haz clic en **Add new site** → **Import an existing project**
+3. Conecta tu repositorio de GitHub
+4. Netlify detectará automáticamente la configuración
+5. Haz clic en **Deploy site**
+6. Tu sitio estará disponible en una URL como: `https://jump-the-car-xyz.netlify.app`
+7. Puedes personalizar el dominio en **Site settings** → **Change site name**
+
+**Ventaja:** Netlify ofrece despliegues automáticos cada vez que haces push a GitHub.
+
+### Opción 3: Vercel (Similar a Netlify)
+
+1. Ve a [vercel.com](https://www.vercel.com) y crea una cuenta gratuita
+2. Haz clic en **Add New Project**
+3. Importa tu repositorio de GitHub
+4. Vercel detectará automáticamente que es un sitio estático
+5. Haz clic en **Deploy**
+6. Tu sitio estará disponible en una URL como: `https://jump-the-car.vercel.app`
+
+**Ventaja:** Vercel también ofrece despliegues automáticos y es muy rápido.
+
+### Opción 4: Surge.sh (Desde la Terminal)
+
+```bash
+# Instala Surge globalmente
+npm install -g surge
+
+# Desde la carpeta del proyecto, ejecuta:
+surge
+
+# Te pedirá crear una cuenta (gratis) y elegir un dominio
+# Ejemplo: jump-the-car.surge.sh
+```
+
+## 🚀 Instalación y Ejecución Local
 
 ### Opción 1: Usando Makefile (Recomendado)
 
