@@ -540,7 +540,10 @@ function setupCarSelection() {
     const carsGrid = document.getElementById('carsGrid');
     carsGrid.innerHTML = '';
     
+    console.log(`Creando ${cars.length} coches en el panel de selección`);
+    
     cars.forEach(car => {
+        console.log(`Creando coche ${car.id}: ${car.name}`);
         const carOption = document.createElement('div');
         carOption.className = 'car-option';
         
@@ -559,9 +562,14 @@ function setupCarSelection() {
         
         // Fallback: si la imagen no carga, mostrar color de fondo
         carImg.onerror = function() {
+            console.error(`Error cargando sprite para coche ${car.id}: ${carImg.src}`);
             this.style.display = 'none';
             carSpriteDiv.style.background = car.color;
             carSpriteDiv.style.border = '3px solid #2d3436';
+        };
+        
+        carImg.onload = function() {
+            console.log(`Sprite cargado exitosamente para coche ${car.id}`);
         };
         
         carSpriteDiv.appendChild(carImg);
@@ -575,6 +583,8 @@ function setupCarSelection() {
         carOption.addEventListener('click', (e) => selectCar(car, e.currentTarget));
         carsGrid.appendChild(carOption);
     });
+    
+    console.log(`Total de coches agregados al grid: ${carsGrid.children.length}`);
 }
 
 // Seleccionar coche

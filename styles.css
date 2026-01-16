@@ -102,7 +102,7 @@ body::before {
 /* Optimización para tablets en modo horizontal */
 @media screen and (min-width: 768px) and (orientation: landscape) {
     .cars-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 15px;
         max-width: 100%;
     }
