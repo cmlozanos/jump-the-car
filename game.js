@@ -85,6 +85,12 @@ let currentLevel = 1;
 let attempts = 0;
 let explosionActive = false;
 let explosionParticles = [];
+
+// Sistema de audio
+let audioContext = null;
+let engineSoundOscillator = null;
+let engineSoundGain = null;
+let isEngineSoundPlaying = false;
 let gameLoopRunning = false; // Control para evitar múltiples bucles de juego
 
 // Sprites cargados
@@ -147,7 +153,12 @@ let jumpStartTime = 0;
 
 // Scroll de la carretera
 let roadScrollX = 0; // Posición de scroll de la carretera
-const roadSpeed = SPEED.ROAD_SCROLL;
+let roadSpeed = SPEED.ROAD_SCROLL; // Velocidad que aumenta con cada nivel
+
+// Función para calcular la velocidad según el nivel (aumenta 0.1 por nivel)
+function getRoadSpeedForLevel(level) {
+    return SPEED.ROAD_SCROLL + (level - 1) * 0.1;
+}
 
 // Definición de coches disponibles (Monster Trucks Hot Wheels)
 const cars = [
@@ -215,11 +226,240 @@ const levels = [
             { distance: 2500, y: 520, width: 30, height: 20 },
             { distance: 3000, y: 480, width: 30, height: 20 }
         ]
+    },
+    {
+        goalDistance: 4000,
+        obstacles: [
+            { distance: 500, y: 520, width: 30, height: 20 },
+            { distance: 1000, y: 480, width: 30, height: 20 },
+            { distance: 1500, y: 520, width: 30, height: 20 },
+            { distance: 2000, y: 480, width: 30, height: 20 },
+            { distance: 2500, y: 520, width: 30, height: 20 },
+            { distance: 3000, y: 480, width: 30, height: 20 },
+            { distance: 3500, y: 520, width: 30, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 4500,
+        obstacles: [
+            { distance: 600, y: 520, width: 28, height: 20 },
+            { distance: 1200, y: 480, width: 28, height: 20 },
+            { distance: 1800, y: 520, width: 28, height: 20 },
+            { distance: 2400, y: 480, width: 28, height: 20 },
+            { distance: 3000, y: 520, width: 28, height: 20 },
+            { distance: 3600, y: 480, width: 28, height: 20 },
+            { distance: 4200, y: 520, width: 28, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 5000,
+        obstacles: [
+            { distance: 500, y: 520, width: 28, height: 20 },
+            { distance: 1000, y: 480, width: 28, height: 20 },
+            { distance: 1500, y: 520, width: 28, height: 20 },
+            { distance: 2000, y: 480, width: 28, height: 20 },
+            { distance: 2500, y: 520, width: 28, height: 20 },
+            { distance: 3000, y: 480, width: 28, height: 20 },
+            { distance: 3500, y: 520, width: 28, height: 20 },
+            { distance: 4000, y: 480, width: 28, height: 20 },
+            { distance: 4500, y: 520, width: 28, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 5500,
+        obstacles: [
+            { distance: 600, y: 520, width: 25, height: 20 },
+            { distance: 1200, y: 480, width: 25, height: 20 },
+            { distance: 1800, y: 520, width: 25, height: 20 },
+            { distance: 2400, y: 480, width: 25, height: 20 },
+            { distance: 3000, y: 520, width: 25, height: 20 },
+            { distance: 3600, y: 480, width: 25, height: 20 },
+            { distance: 4200, y: 520, width: 25, height: 20 },
+            { distance: 4800, y: 480, width: 25, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 6000,
+        obstacles: [
+            { distance: 500, y: 520, width: 25, height: 20 },
+            { distance: 1000, y: 480, width: 25, height: 20 },
+            { distance: 1500, y: 520, width: 25, height: 20 },
+            { distance: 2000, y: 480, width: 25, height: 20 },
+            { distance: 2500, y: 520, width: 25, height: 20 },
+            { distance: 3000, y: 480, width: 25, height: 20 },
+            { distance: 3500, y: 520, width: 25, height: 20 },
+            { distance: 4000, y: 480, width: 25, height: 20 },
+            { distance: 4500, y: 520, width: 25, height: 20 },
+            { distance: 5000, y: 480, width: 25, height: 20 },
+            { distance: 5500, y: 520, width: 25, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 6500,
+        obstacles: [
+            { distance: 600, y: 520, width: 22, height: 20 },
+            { distance: 1200, y: 480, width: 22, height: 20 },
+            { distance: 1800, y: 520, width: 22, height: 20 },
+            { distance: 2400, y: 480, width: 22, height: 20 },
+            { distance: 3000, y: 520, width: 22, height: 20 },
+            { distance: 3600, y: 480, width: 22, height: 20 },
+            { distance: 4200, y: 520, width: 22, height: 20 },
+            { distance: 4800, y: 480, width: 22, height: 20 },
+            { distance: 5400, y: 520, width: 22, height: 20 },
+            { distance: 6000, y: 480, width: 22, height: 20 }
+        ]
+    },
+    {
+        goalDistance: 7000,
+        obstacles: [
+            { distance: 500, y: 520, width: 22, height: 20 },
+            { distance: 1000, y: 480, width: 22, height: 20 },
+            { distance: 1500, y: 520, width: 22, height: 20 },
+            { distance: 2000, y: 480, width: 22, height: 20 },
+            { distance: 2500, y: 520, width: 22, height: 20 },
+            { distance: 3000, y: 480, width: 22, height: 20 },
+            { distance: 3500, y: 520, width: 22, height: 20 },
+            { distance: 4000, y: 480, width: 22, height: 20 },
+            { distance: 4500, y: 520, width: 22, height: 20 },
+            { distance: 5000, y: 480, width: 22, height: 20 },
+            { distance: 5500, y: 520, width: 22, height: 20 },
+            { distance: 6000, y: 480, width: 22, height: 20 },
+            { distance: 6500, y: 520, width: 22, height: 20 }
+        ]
     }
 ];
 
 let currentLevelData = levels[0];
 let currentDistance = 0; // Distancia recorrida en el nivel actual
+
+// ============================================================================
+// SISTEMA DE AUDIO
+// ============================================================================
+
+// Inicializar contexto de audio
+function initAudio() {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Resumir el contexto si está suspendido (necesario para algunos navegadores)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    } catch (e) {
+        console.warn('AudioContext no disponible:', e);
+    }
+}
+
+// Función para resumir el contexto de audio (necesario para autoplay)
+function resumeAudioContext() {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+            console.log('AudioContext resumido');
+        });
+    }
+}
+
+// Reproducir sonido del motor (en loop)
+function startEngineSound() {
+    if (!audioContext || isEngineSoundPlaying) return;
+    
+    try {
+        // Crear oscilador principal (sonido grave del motor)
+        engineSoundOscillator = audioContext.createOscillator();
+        engineSoundOscillator.type = 'sawtooth';
+        engineSoundOscillator.frequency.setValueAtTime(80, audioContext.currentTime); // Frecuencia baja para sonido de motor
+        
+        // Crear ganancia para controlar el volumen
+        engineSoundGain = audioContext.createGain();
+        engineSoundGain.gain.setValueAtTime(0.15, audioContext.currentTime); // Volumen bajo
+        
+        // Crear filtro para hacer el sonido más realista
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200, audioContext.currentTime);
+        
+        // Conectar: oscilador -> filtro -> ganancia -> destino
+        engineSoundOscillator.connect(filter);
+        filter.connect(engineSoundGain);
+        engineSoundGain.connect(audioContext.destination);
+        
+        // Iniciar el sonido
+        engineSoundOscillator.start();
+        isEngineSoundPlaying = true;
+    } catch (e) {
+        console.warn('Error al iniciar sonido del motor:', e);
+    }
+}
+
+// Detener sonido del motor
+function stopEngineSound() {
+    if (!isEngineSoundPlaying || !engineSoundOscillator) return;
+    
+    try {
+        if (engineSoundGain) {
+            engineSoundGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        }
+        setTimeout(() => {
+            if (engineSoundOscillator) {
+                engineSoundOscillator.stop();
+                engineSoundOscillator.disconnect();
+                engineSoundOscillator = null;
+                engineSoundGain = null;
+                isEngineSoundPlaying = false;
+            }
+        }, 100);
+    } catch (e) {
+        console.warn('Error al detener sonido del motor:', e);
+        isEngineSoundPlaying = false;
+    }
+}
+
+// Reproducir sonido de salto
+function playJumpSound() {
+    if (!audioContext) return;
+    
+    try {
+        // Crear oscilador para el sonido de salto (sonido más agudo y corto)
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime); // Frecuencia media-alta
+        
+        // Envelope ADSR rápido para sonido de salto
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01); // Attack rápido
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15); // Decay rápido
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15); // Sonido corto
+        
+        // Agregar un segundo oscilador para hacer el sonido más interesante
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'square';
+        oscillator2.frequency.setValueAtTime(600, audioContext.currentTime);
+        
+        gainNode2.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode2.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(audioContext.currentTime);
+        oscillator2.stop(audioContext.currentTime + 0.1);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de salto:', e);
+    }
+}
+
+// ============================================================================
+// FIN DEL SISTEMA DE AUDIO
+// ============================================================================
 
 // Inicialización
 async function init() {
@@ -234,6 +474,9 @@ async function init() {
         console.error('No se pudo obtener el contexto 2D del canvas');
         return;
     }
+    
+    // Inicializar audio
+    initAudio();
     
     // Cargar sprites primero
     await loadSprites();
@@ -319,6 +562,8 @@ function selectCar(car, element = null) {
         gameState = 'playing';
         resetGame();
         draw();
+        // Iniciar sonido del motor cuando comienza el juego
+        startEngineSound();
         // Iniciar el bucle del juego automáticamente
         if (canvas && ctx && !gameLoopRunning) {
             gameLoop();
@@ -365,6 +610,9 @@ function changeCar() {
     if (isJumping || gameState === 'jumping' || gameState === 'exploded') {
         return;
     }
+    
+    // Detener sonido del motor cuando se vuelve a selección
+    stopEngineSound();
     
     // Ocultar panel de juego y mostrar panel de selección
     document.getElementById('gamePanel').style.display = 'none';
@@ -470,12 +718,18 @@ function setupEventListeners() {
     
     document.getElementById('retryButton').addEventListener('click', () => {
         document.getElementById('messageOverlay').style.display = 'none';
+        resumeAudioContext(); // Resumir audio si está suspendido
         resetGame();
     });
     document.getElementById('nextLevelButton').addEventListener('click', () => {
         document.getElementById('messageOverlay').style.display = 'none';
+        resumeAudioContext(); // Resumir audio si está suspendido
         nextLevel();
     });
+    
+    // Resumir audio al hacer clic en el canvas (para cumplir con política de autoplay)
+    canvas.addEventListener('click', resumeAudioContext);
+    canvas.addEventListener('touchstart', resumeAudioContext);
 }
 
 // Iniciar salto
@@ -498,6 +752,9 @@ function startJump() {
     }
     
     attempts++;
+    
+    // Reproducir sonido de salto
+    playJumpSound();
     
     isJumping = true;
     gameState = 'jumping';
@@ -1210,6 +1467,9 @@ function drawCar() {
 
 // Mostrar mensaje
 function showMessage(title, text, showNextLevel = false) {
+    // Detener sonido del motor cuando se muestra un mensaje (victoria/derrota)
+    stopEngineSound();
+    
     document.getElementById('messageTitle').textContent = title;
     document.getElementById('messageText').textContent = text;
     document.getElementById('nextLevelButton').style.display = showNextLevel ? 'inline-block' : 'none';
@@ -1229,6 +1489,9 @@ function resetGame() {
     attempts = 0;
     gameState = selectedCar ? 'playing' : 'selecting';
     
+    // Actualizar velocidad según el nivel actual
+    roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
     if (selectedCar) {
         // Reestablecer valores del coche seleccionado para mantener consistencia
         angle = selectedCar.baseAngle;
@@ -1238,11 +1501,18 @@ function resetGame() {
         // Reaplicar tema al reiniciar
         applyCarTheme(selectedCar);
         draw();
+        // Iniciar sonido del motor cuando se reinicia el juego con un coche seleccionado
+        if (gameState === 'playing') {
+            startEngineSound();
+        }
         // Iniciar el bucle del juego automáticamente si está en estado playing
         // Solo iniciar si no hay un bucle ya ejecutándose
         if (gameState === 'playing' && !gameLoopRunning) {
             gameLoop();
         }
+    } else {
+        // Detener sonido del motor si no hay coche seleccionado
+        stopEngineSound();
     }
 }
 
@@ -1251,6 +1521,8 @@ function nextLevel() {
     if (currentLevel < levels.length) {
         currentLevel++;
         currentLevelData = levels[currentLevel - 1];
+        // Actualizar velocidad según el nivel (aumenta 0.1 por nivel)
+        roadSpeed = getRoadSpeedForLevel(currentLevel);
         attempts = 0;
         currentDistance = 0;
         roadScrollX = 0;
