@@ -85,6 +85,7 @@ let currentLevel = 1;
 let attempts = 0;
 let explosionActive = false;
 let explosionParticles = [];
+let landingSoundPlayed = false; // Control para evitar reproducir sonido de aterrizaje múltiples veces
 
 // Sistema de audio
 let audioContext = null;
@@ -101,7 +102,7 @@ const sprites = {
     spikes: null,
     tree: null,
     hole: null,
-    airplane: null,
+    ufo: null,
     goal: null,
     cloud: null,
     sun: null
@@ -133,7 +134,7 @@ async function loadSprites() {
         sprites.spikes = await loadImage('sprites/environment/spikes.svg');
         sprites.tree = await loadImage('sprites/environment/tree.svg');
         sprites.hole = await loadImage('sprites/environment/hole.svg');
-        sprites.airplane = await loadImage('sprites/environment/airplane.svg');
+        sprites.ufo = await loadImage('sprites/environment/ufo.svg');
         
         // Cargar sprites de ambiente
         sprites.goal = await loadImage('sprites/environment/goal.svg');
@@ -285,7 +286,7 @@ const levels = [
         goalDistance: 3000,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 40, height: 20, type: 'obstacle' },
             { distance: 2400, y: 520, width: 60, height: 30, type: 'hole' }
         ]
@@ -294,11 +295,11 @@ const levels = [
         goalDistance: 3500,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 380, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
             { distance: 2500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3000, y: 320, width: 80, height: 40, type: 'airplane' }
+            { distance: 3000, y: 320, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
@@ -306,22 +307,22 @@ const levels = [
         obstacles: [
             { distance: 500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 1000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
             { distance: 2500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' }
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 4500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 40, height: 20, type: 'obstacle' },
             { distance: 2400, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3600, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 3600, y: 380, width: 80, height: 40, type: 'ufo' },
             { distance: 4200, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
     },
@@ -329,42 +330,42 @@ const levels = [
         goalDistance: 5000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
             { distance: 2500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4500, y: 380, width: 80, height: 40, type: 'airplane' }
+            { distance: 4500, y: 380, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 5500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 4200, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 4800, y: 340, width: 80, height: 40, type: 'airplane' }
+            { distance: 4800, y: 340, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 6000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 380, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 3500, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 4000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 5000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
     },
@@ -372,32 +373,32 @@ const levels = [
         goalDistance: 6500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' }
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 7000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 380, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 380, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' }
         ]
     },
@@ -405,54 +406,54 @@ const levels = [
         goalDistance: 7500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 7200, y: 340, width: 80, height: 40, type: 'airplane' }
+            { distance: 7200, y: 340, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 8000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 370, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 7500, y: 350, width: 80, height: 40, type: 'airplane' }
+            { distance: 7500, y: 350, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 8500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
@@ -461,64 +462,64 @@ const levels = [
         goalDistance: 9000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' }
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 9500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' }
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 10000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
@@ -527,47 +528,47 @@ const levels = [
         goalDistance: 10500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 9600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 10200, y: 340, width: 80, height: 40, type: 'airplane' }
+            { distance: 10200, y: 340, width: 80, height: 40, type: 'ufo' }
         ]
     },
     {
         goalDistance: 11000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 10000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 10000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 10500, y: 520, width: 40, height: 20, type: 'spikes' }
         ]
     },
@@ -575,22 +576,22 @@ const levels = [
         goalDistance: 11500,
         obstacles: [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 1200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 3000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 4200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 4200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 4800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 5400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 6000, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 6600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 7200, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 7200, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 7800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 8400, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 9000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 9000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 9600, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 10200, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 10200, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 10800, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 11400, y: 520, width: 40, height: 20, type: 'obstacle' }
         ]
@@ -599,27 +600,27 @@ const levels = [
         goalDistance: 12000,
         obstacles: [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 1000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 1000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 2500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 2500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 3500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 3500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 4000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 4500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 5000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 5000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 5500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 6000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 6000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 6500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 7000, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 7500, y: 360, width: 80, height: 40, type: 'airplane' },
+            { distance: 7500, y: 360, width: 80, height: 40, type: 'ufo' },
             { distance: 8000, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 8500, y: 330, width: 80, height: 40, type: 'airplane' },
+            { distance: 8500, y: 330, width: 80, height: 40, type: 'ufo' },
             { distance: 9000, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 9500, y: 520, width: 40, height: 20, type: 'obstacle' },
-            { distance: 10000, y: 350, width: 80, height: 40, type: 'airplane' },
+            { distance: 10000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 10500, y: 520, width: 40, height: 20, type: 'spikes' },
-            { distance: 11000, y: 340, width: 80, height: 40, type: 'airplane' },
+            { distance: 11000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 11500, y: 520, width: 60, height: 30, type: 'hole' }
         ]
     }
@@ -869,6 +870,100 @@ function playWinSound() {
         }, 600);
     } catch (e) {
         console.warn('Error al reproducir sonido de victoria:', e);
+    }
+}
+
+// Reproducir sonido de aterrizaje
+function playLandingSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido principal de aterrizaje (impacto suave)
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sine';
+        oscillator1.frequency.setValueAtTime(150, now); // Frecuencia baja para sonido grave
+        oscillator1.frequency.exponentialRampToValueAtTime(80, now + 0.1); // Bajar la frecuencia rápidamente
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.25, now + 0.005); // Attack muy rápido
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.15); // Decay rápido
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.15);
+        
+        // Sonido secundario (ruido de impacto suave)
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'triangle';
+        oscillator2.frequency.setValueAtTime(200, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.15, now + 0.003);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.12);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de aterrizaje:', e);
+    }
+}
+
+// Reproducir sonido de aterrizaje
+function playLandingSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido principal de aterrizaje (impacto suave)
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sine';
+        oscillator1.frequency.setValueAtTime(150, now); // Frecuencia baja para sonido grave
+        oscillator1.frequency.exponentialRampToValueAtTime(80, now + 0.1); // Bajar la frecuencia rápidamente
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.25, now + 0.005); // Attack muy rápido
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.15); // Decay rápido
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.15);
+        
+        // Sonido secundario (ruido de impacto suave)
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'triangle';
+        oscillator2.frequency.setValueAtTime(200, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.15, now + 0.003);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.12);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de aterrizaje:', e);
     }
 }
 
@@ -1189,6 +1284,9 @@ function startJump() {
     // Reproducir sonido de salto
     playJumpSound();
     
+    // Resetear flag de sonido de aterrizaje para el nuevo salto
+    landingSoundPlayed = false;
+    
     isJumping = true;
     gameState = 'jumping';
     jumpStartTime = Date.now();
@@ -1294,6 +1392,13 @@ function update() {
             carY = groundLevel;
             carVy = 0;
             isJumping = false;
+            
+            // Reproducir sonido de aterrizaje solo una vez por aterrizaje
+            if (!landingSoundPlayed) {
+                playLandingSound();
+                landingSoundPlayed = true;
+            }
+            
             gameState = 'playing'; // Volver al estado de juego para permitir otro salto
             
             // Verificar si pasó la meta antes de detenerse
@@ -1350,7 +1455,7 @@ const obstacleMessages = {
     'spikes': 'pinchos',
     'tree': 'un árbol',
     'hole': 'un agujero',
-    'airplane': 'un avión',
+    'ufo': 'un platillo volante',
     'obstacle': 'una roca'
 };
 
@@ -1770,8 +1875,8 @@ function drawObstacles() {
                 case 'hole':
                     spriteToUse = sprites.hole;
                     break;
-                case 'airplane':
-                    spriteToUse = sprites.airplane;
+                case 'ufo':
+                    spriteToUse = sprites.ufo;
                     break;
                 case 'obstacle':
                 default:
@@ -1798,8 +1903,8 @@ function drawObstacles() {
             }
             
             // Señal de peligro (emoji de advertencia) - solo para algunos tipos
-            if (obstacleType !== 'tree' && obstacleType !== 'airplane') {
-                // Los árboles son más altos y los aviones están en el aire, no necesitan el emoji arriba
+            if (obstacleType !== 'tree' && obstacleType !== 'ufo') {
+                // Los árboles son más altos y los platillos volantes están en el aire, no necesitan el emoji arriba
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);

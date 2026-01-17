@@ -1,0 +1,50 @@
+<svg width="80" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Platillo volante estilo dibujo animado -->
+  <!-- Definir gradiente para el platillo -->
+  <defs>
+    <linearGradient id="ufoGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#c0c0c0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e0e0e0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a0a0a0;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="ufoGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#00ffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#0080ff;stop-opacity:0.3" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Cúpula superior del platillo -->
+  <ellipse cx="40" cy="15" rx="30" ry="12" fill="url(#ufoGradient)"/>
+  <ellipse cx="40" cy="15" rx="28" ry="10" fill="#d0d0d0"/>
+  
+  <!-- Cuerpo principal del platillo (parte inferior) -->
+  <ellipse cx="40" cy="25" rx="35" ry="8" fill="url(#ufoGradient)"/>
+  <ellipse cx="40" cy="25" rx="33" ry="6" fill="#b0b0b0"/>
+  
+  <!-- Ventanas en la cúpula -->
+  <ellipse cx="30" cy="12" rx="4" ry="3" fill="#00ffff" opacity="0.8"/>
+  <ellipse cx="40" cy="10" rx="5" ry="4" fill="#00ffff" opacity="0.8"/>
+  <ellipse cx="50" cy="12" rx="4" ry="3" fill="#00ffff" opacity="0.8"/>
+  
+  <!-- Brillo en las ventanas -->
+  <ellipse cx="30" cy="11" rx="2" ry="1.5" fill="#ffffff" opacity="0.6"/>
+  <ellipse cx="40" cy="9" rx="2.5" ry="2" fill="#ffffff" opacity="0.6"/>
+  <ellipse cx="50" cy="11" rx="2" ry="1.5" fill="#ffffff" opacity="0.6"/>
+  
+  <!-- Luces en la parte inferior -->
+  <circle cx="20" cy="30" r="3" fill="#00ff00"/>
+  <circle cx="40" cy="32" r="4" fill="#00ff00"/>
+  <circle cx="60" cy="30" r="3" fill="#00ff00"/>
+  
+  <!-- Brillo de las luces -->
+  <circle cx="20" cy="30" r="1.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="40" cy="32" r="2" fill="#ffffff" opacity="0.8"/>
+  <circle cx="60" cy="30" r="1.5" fill="#ffffff" opacity="0.8"/>
+  
+  <!-- Efecto de resplandor alrededor del platillo -->
+  <ellipse cx="40" cy="20" rx="38" ry="15" fill="url(#ufoGlow)" opacity="0.4"/>
+  
+  <!-- Detalles decorativos en el cuerpo -->
+  <ellipse cx="40" cy="25" rx="30" ry="4" fill="none" stroke="#888" stroke-width="1" opacity="0.5"/>
+  <ellipse cx="40" cy="15" rx="25" ry="8" fill="none" stroke="#aaa" stroke-width="1" opacity="0.4"/>
+</svg>
