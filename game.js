@@ -1427,8 +1427,28 @@ function updateCanvasButtonsPosition() {
     if (!canvas || !changeCarButton || !configButton) return;
     
     const rect = canvas.getBoundingClientRect();
-    const buttonSize = UI.BUTTON_SIZE;
-    const padding = UI.BUTTON_PADDING;
+    
+    // Detectar pantallas pequeñas (menos de 600px de ancho)
+    const isSmallScreen = window.innerWidth < 600;
+    
+    // Ajustar tamaño y espaciado según el tamaño de pantalla
+    const buttonSize = isSmallScreen ? 45 : UI.BUTTON_SIZE;
+    const padding = isSmallScreen ? 10 : UI.BUTTON_PADDING;
+    const buttonSpacing = isSmallScreen ? 5 : 10;
+    
+    // Aplicar tamaño a los botones
+    changeCarButton.style.width = `${buttonSize}px`;
+    changeCarButton.style.height = `${buttonSize}px`;
+    configButton.style.width = `${buttonSize}px`;
+    configButton.style.height = `${buttonSize}px`;
+    
+    // Ajustar tamaño del sprite dentro del botón
+    const spriteSize = isSmallScreen ? 30 : 40;
+    const spriteElements = document.querySelectorAll('.button-sprite');
+    spriteElements.forEach(img => {
+        img.style.width = `${spriteSize}px`;
+        img.style.height = `${spriteSize}px`;
+    });
     
     // Calcular posición relativa al canvas (en porcentaje para que sea responsive)
     const canvasWidth = canvas.width;
@@ -1444,7 +1464,7 @@ function updateCanvasButtonsPosition() {
     
     // Botón de configuración (debajo del botón de cambiar coche)
     const configX = (canvasWidth - padding - buttonSize) * scaleX;
-    const configY = (padding + buttonSize + 10) * scaleY;
+    const configY = (padding + buttonSize + buttonSpacing) * scaleY;
     configButton.style.left = `${configX}px`;
     configButton.style.top = `${configY}px`;
 }
