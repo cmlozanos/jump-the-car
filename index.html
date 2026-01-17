@@ -40,6 +40,34 @@
                 <button id="restartFromLevel1Button" style="display: none;">🔄 Reiniciar desde el Nivel 1</button>
             </div>
         </div>
+
+        <!-- Panel de configuración -->
+        <div class="config-overlay" id="configOverlay" style="display: none;">
+            <div class="config-content">
+                <h2><img src="sprites/environment/settings.svg" alt="Configuración" class="config-title-icon"> Configuración</h2>
+                <div class="config-section">
+                    <h3>Velocidad del Vehículo</h3>
+                    <div class="speed-controls">
+                        <button id="accelerateButton" class="config-button accelerate-btn">
+                            <img src="sprites/environment/arrow_up.svg" alt="Acelerar" class="button-icon-img">
+                            <span class="button-label">Acelerar</span>
+                        </button>
+                        <div class="speed-display">
+                            <span id="currentSpeedDisplay">15 km/h</span>
+                        </div>
+                        <button id="decelerateButton" class="config-button decelerate-btn">
+                            <img src="sprites/environment/arrow_down.svg" alt="Desacelerar" class="button-icon-img">
+                            <span class="button-label">Desacelerar</span>
+                        </button>
+                    </div>
+                </div>
+                <button id="closeConfigButton" class="config-close-button">
+                    <img src="sprites/environment/close.svg" alt="Cerrar" class="close-icon-img">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script src="game.js"></script>

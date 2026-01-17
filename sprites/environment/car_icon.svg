@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Icono de coche simplificado -->
+  <rect x="15" y="40" width="70" height="35" rx="5" fill="#ffffff" stroke="#2d3436" stroke-width="2"/>
+  <!-- Ventanas -->
+  <rect x="25" y="45" width="15" height="12" rx="2" fill="#87ceeb"/>
+  <rect x="60" y="45" width="15" height="12" rx="2" fill="#87ceeb"/>
+  <!-- Ruedas -->
+  <circle cx="30" cy="80" r="8" fill="#2d3436"/>
+  <circle cx="70" cy="80" r="8" fill="#2d3436"/>
+  <circle cx="30" cy="80" r="5" fill="#555"/>
+  <circle cx="70" cy="80" r="5" fill="#555"/>
+</svg>

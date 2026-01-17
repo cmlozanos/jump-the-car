@@ -79,7 +79,7 @@ let canvas = null;
 let ctx = null;
 
 // Estados del juego
-let gameState = 'selecting'; // 'selecting', 'playing', 'jumping', 'won', 'lost', 'exploded'
+let gameState = 'selecting'; // 'selecting', 'playing', 'jumping', 'won', 'lost', 'exploded', 'paused'
 let selectedCar = null;
 let currentLevel = 1;
 let attempts = 0;
@@ -88,6 +88,8 @@ let explosionParticles = [];
 let landingSoundPlayed = false; // Control para evitar reproducir sonido de aterrizaje múltiples veces
 let cloudPositions = []; // Posiciones de las nubes para animación
 let cloudSpeed = 0.03; // Velocidad de movimiento de las nubes (muy lenta)
+let gamePaused = false; // Control de pausa del juego
+let previousGameState = null; // Guardar el estado anterior cuando se pausa
 
 // Sistema de audio
 let audioContext = null;
@@ -111,7 +113,12 @@ const sprites = {
     moonFull: null,
     moonCrescent: null,
     moonWaning: null,
-    moonHalf: null
+    moonHalf: null,
+    settings: null,
+    arrowUp: null,
+    arrowDown: null,
+    carIcon: null,
+    close: null
 };
 
 // Función para cargar una imagen
@@ -153,6 +160,15 @@ async function loadSprites() {
         sprites.moonWaning = await loadImage('sprites/environment/moon_waning.svg');
         sprites.moonHalf = await loadImage('sprites/environment/moon_half.svg');
         
+        // Cargar sprite de configuración
+        sprites.settings = await loadImage('sprites/environment/settings.svg');
+        
+        // Cargar sprites de UI
+        sprites.arrowUp = await loadImage('sprites/environment/arrow_up.svg');
+        sprites.arrowDown = await loadImage('sprites/environment/arrow_down.svg');
+        sprites.carIcon = await loadImage('sprites/environment/car_icon.svg');
+        sprites.close = await loadImage('sprites/environment/close.svg');
+        
         console.log('Todos los sprites cargados exitosamente');
         return true;
     } catch (error) {
@@ -177,10 +193,11 @@ let jumpStartTime = 0;
 // Scroll de la carretera
 let roadScrollX = 0; // Posición de scroll de la carretera
 let roadSpeed = SPEED.ROAD_SCROLL; // Velocidad que aumenta con cada nivel
+let speedMultiplier = 1.0; // Multiplicador de velocidad (se puede aumentar con el botón de aceleración)
 
 // Función para calcular la velocidad según el nivel (aumenta 0.1 por nivel)
 function getRoadSpeedForLevel(level) {
-    return SPEED.ROAD_SCROLL + (level - 1) * 0.1;
+    return (SPEED.ROAD_SCROLL + (level - 1) * 0.1) * speedMultiplier;
 }
 
 // Definición de coches disponibles (Monster Trucks Hot Wheels)
@@ -1136,6 +1153,144 @@ function resetDefaultTheme() {
     }
 }
 
+// Mostrar panel de configuración
+function showConfigPanel() {
+    // Solo permitir abrir configuración si el juego está en ejecución
+    if (gameState !== 'playing' && gameState !== 'jumping') return;
+    
+    // Guardar el estado actual y pausar el juego
+    previousGameState = gameState;
+    gamePaused = true;
+    gameState = 'paused';
+    
+    // Detener el sonido del motor
+    stopEngineSound();
+    
+    // Mostrar el panel
+    document.getElementById('configOverlay').style.display = 'flex';
+    updateConfigSpeedDisplay();
+}
+
+// Ocultar panel de configuración
+function hideConfigPanel() {
+    // Ocultar el panel
+    document.getElementById('configOverlay').style.display = 'none';
+    
+    // Reanudar el juego si estaba en ejecución
+    if (gamePaused && previousGameState) {
+        gameState = previousGameState;
+        gamePaused = false;
+        previousGameState = null;
+        
+        // Reanudar el sonido del motor si estaba en estado playing
+        if (gameState === 'playing') {
+            startEngineSound();
+        }
+        
+        // Continuar el bucle del juego si es necesario
+        if (gameState === 'playing' || gameState === 'jumping') {
+            if (!gameLoopRunning) {
+                gameLoop();
+            }
+        }
+    }
+}
+
+// Actualizar display de velocidad en el panel de configuración
+function updateConfigSpeedDisplay() {
+    const speedKmh = Math.round(roadSpeed * 10);
+    const speedDisplayElement = document.getElementById('currentSpeedDisplay');
+    if (speedDisplayElement) {
+        speedDisplayElement.textContent = `${speedKmh} km/h`;
+    }
+}
+
+// Acelerar coche (aumenta la velocidad permanentemente)
+function accelerateCar() {
+    // Aumentar el multiplicador de velocidad en 0.2 (20% más rápido)
+    speedMultiplier += 0.2;
+    
+    // Limitar velocidad máxima (opcional, por ejemplo 3x)
+    if (speedMultiplier > 3.0) {
+        speedMultiplier = 3.0;
+    }
+    
+    // Actualizar la velocidad actual
+    roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
+    // Reproducir sonido de aceleración
+    playAccelerationSound();
+}
+
+// Desacelerar coche (disminuye la velocidad permanentemente)
+function decelerateCar() {
+    // Disminuir el multiplicador de velocidad en 0.2 (20% más lento)
+    speedMultiplier -= 0.2;
+    
+    // Limitar velocidad mínima (no puede ser menor que 0.5x)
+    if (speedMultiplier < 0.5) {
+        speedMultiplier = 0.5;
+    }
+    
+    // Actualizar la velocidad actual
+    roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
+    // Reproducir sonido de desaceleración
+    playDecelerationSound();
+}
+
+// Reproducir sonido de aceleración
+function playAccelerationSound() {
+    if (!audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(500, audioContext.currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de aceleración:', e);
+    }
+}
+
+// Reproducir sonido de desaceleración
+function playDecelerationSound() {
+    if (!audioContext) return;
+    
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.15);
+        
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de desaceleración:', e);
+    }
+}
+
 // Cambiar coche (volver al panel de selección sin perder el nivel)
 function changeCar() {
     // Solo permitir cambiar coche si no está saltando
@@ -1215,6 +1370,18 @@ function setupEventListeners() {
             return true;
         }
         
+        // Botón de configuración (esquina superior derecha, debajo del botón de cambiar coche)
+        const configX = canvas.width - padding - buttonSize;
+        const configY = padding + buttonSize + 10;
+        const configCenterX = configX + buttonSize/2;
+        const configCenterY = configY + buttonSize/2;
+        const configDist = Math.sqrt((x - configCenterX) ** 2 + (y - configCenterY) ** 2);
+        
+        if (configDist <= buttonSize/2) {
+            showConfigPanel();
+            return true;
+        }
+        
         return false;
     }
     
@@ -1228,8 +1395,8 @@ function setupEventListeners() {
             return;
         }
         
-        // Si no es un botón, saltar
-        if (gameState === 'playing' || gameState === 'jumping') {
+        // Si no es un botón, saltar (solo si no está pausado)
+        if ((gameState === 'playing' || gameState === 'jumping') && !gamePaused) {
             startJump();
         }
     });
@@ -1242,8 +1409,8 @@ function setupEventListeners() {
             return;
         }
         
-        // Si no es un botón, saltar
-        if (gameState === 'playing' || gameState === 'jumping') {
+        // Si no es un botón, saltar (solo si no está pausado)
+        if ((gameState === 'playing' || gameState === 'jumping') && !gamePaused) {
             startJump();
         }
     });
@@ -1264,6 +1431,28 @@ function setupEventListeners() {
         restartFromLevel1();
     });
     
+    // Event listeners para el panel de configuración
+    document.getElementById('accelerateButton').addEventListener('click', () => {
+        accelerateCar();
+        updateConfigSpeedDisplay();
+    });
+    
+    document.getElementById('decelerateButton').addEventListener('click', () => {
+        decelerateCar();
+        updateConfigSpeedDisplay();
+    });
+    
+    document.getElementById('closeConfigButton').addEventListener('click', () => {
+        hideConfigPanel();
+    });
+    
+    // Cerrar panel de configuración al hacer clic fuera de él
+    document.getElementById('configOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'configOverlay') {
+            hideConfigPanel();
+        }
+    });
+    
     // Resumir audio al hacer clic en el canvas (para cumplir con política de autoplay)
     canvas.addEventListener('click', resumeAudioContext);
     canvas.addEventListener('touchstart', resumeAudioContext);
@@ -1271,8 +1460,8 @@ function setupEventListeners() {
 
 // Iniciar salto
 function startJump() {
-    // Solo permitir saltar si no está saltando y el juego está en estado 'playing'
-    if (isJumping || gameState !== 'playing') return;
+    // Solo permitir saltar si no está saltando, el juego está en estado 'playing' y no está pausado
+    if (isJumping || gameState !== 'playing' || gamePaused) return;
     
     // Verificar si ya pasó la meta
     if (currentDistance >= currentLevelData.goalDistance) {
@@ -1325,6 +1514,13 @@ function gameLoop() {
         return;
     }
     
+    // Si el juego está pausado, solo dibujar (sin actualizar)
+    if (gameState === 'paused' || gamePaused) {
+        draw();
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    
     gameLoopRunning = true; // Marcar que el bucle está ejecutándose
     update();
     draw();
@@ -1349,6 +1545,11 @@ function startGameLoop() {
 
 // Actualizar física
 function update() {
+    // No actualizar si el juego está pausado
+    if (gameState === 'paused' || gamePaused) {
+        return;
+    }
+    
     const carWidth = DIMENSIONS.CAR_WIDTH;
     const carHeight = DIMENSIONS.CAR_HEIGHT;
     const groundLevel = POSITIONS.GROUND_LEVEL;
@@ -1618,12 +1819,24 @@ function drawCanvasButtons() {
     ctx.lineWidth = 3;
     ctx.stroke();
     
-    // Icono de cambiar coche
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
+    // Dibujar sprite de coche
+    if (sprites.carIcon) {
+        const iconPadding = 10;
+        ctx.drawImage(
+            sprites.carIcon,
+            changeX + iconPadding,
+            changeY + iconPadding,
+            buttonSize - iconPadding * 2,
+            buttonSize - iconPadding * 2
+        );
+    } else {
+        // Fallback si el sprite no está cargado
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
+    }
     
     // Información del nivel (esquina superior izquierda)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -1636,6 +1849,56 @@ function drawCanvasButtons() {
     ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px Roboto`;
     ctx.textAlign = 'left';
     ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 30);
+    
+    // Contador de velocidad (debajo del nivel)
+    const speedDisplayY = padding + UI.LEVEL_INFO_HEIGHT + 10;
+    const speedDisplayHeight = 35;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillRect(padding, speedDisplayY, UI.LEVEL_INFO_WIDTH, speedDisplayHeight);
+    ctx.strokeStyle = '#2d3436';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(padding, speedDisplayY, UI.LEVEL_INFO_WIDTH, speedDisplayHeight);
+    
+    // Calcular velocidad en km/h (multiplicar por 10)
+    const speedKmh = Math.round(roadSpeed * 10);
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px Roboto`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`${speedKmh} km/h`, padding + 10, speedDisplayY + 25);
+    
+    // Botón de configuración (esquina superior derecha, debajo del botón de cambiar coche)
+    const configX = canvas.width - padding - buttonSize;
+    const configY = padding + buttonSize + 10;
+    
+    // Fondo del botón (gris para configuración)
+    ctx.fillStyle = 'rgba(108, 117, 125, 0.9)';
+    ctx.beginPath();
+    ctx.arc(configX + buttonSize/2, configY + buttonSize/2, buttonSize/2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Borde
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Dibujar sprite de configuración
+    if (sprites.settings) {
+        const iconPadding = 10;
+        ctx.drawImage(
+            sprites.settings,
+            configX + iconPadding,
+            configY + iconPadding,
+            buttonSize - iconPadding * 2,
+            buttonSize - iconPadding * 2
+        );
+    } else {
+        // Fallback si el sprite no está cargado
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚙️', configX + buttonSize/2, configY + buttonSize/2);
+    }
 }
 
 // Temas de fondo por nivel (cambia cada nivel)
@@ -2414,7 +2677,7 @@ function resetGame() {
     // Reinicializar posiciones de nubes cuando se reinicia el juego
     initializeCloudPositions();
     
-    // Actualizar velocidad según el nivel actual
+    // Actualizar velocidad según el nivel actual (manteniendo el multiplicador)
     roadSpeed = getRoadSpeedForLevel(currentLevel);
     
     if (selectedCar) {
@@ -2449,6 +2712,7 @@ function restartFromLevel1() {
     allLevelsCompleted = false;
     currentLevel = 1;
     currentLevelData = levels[0];
+    speedMultiplier = 1.0; // Resetear el multiplicador al reiniciar desde el nivel 1
     roadSpeed = getRoadSpeedForLevel(1);
     attempts = 0;
     currentDistance = 0;
@@ -2496,6 +2760,7 @@ function nextLevel() {
         currentLevel++;
         currentLevelData = levels[currentLevel - 1];
         // Actualizar velocidad según el nivel (aumenta 0.1 por nivel)
+        // El multiplicador de velocidad se mantiene entre niveles
         roadSpeed = getRoadSpeedForLevel(currentLevel);
         attempts = 0;
         currentDistance = 0;
