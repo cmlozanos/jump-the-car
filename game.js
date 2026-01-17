@@ -51,8 +51,8 @@ const UI = {
     BUTTON_PADDING: 20,               // Padding de los botones desde los bordes
     LEVEL_INFO_WIDTH: 150,            // Ancho del panel de información de nivel
     LEVEL_INFO_HEIGHT: 40,            // Alto del panel de información de nivel
-    LEVEL_INFO_FONT_SIZE: 18,         // Tamaño de fuente del texto de nivel
-    BUTTON_ICON_FONT_SIZE: 30,        // Tamaño de fuente de los iconos de botones
+    LEVEL_INFO_FONT_SIZE: 28,         // Tamaño de fuente del texto de nivel
+    BUTTON_ICON_FONT_SIZE: 40,        // Tamaño de fuente de los iconos de botones
 };
 
 // COLISIONES Y DETECCIÓN
@@ -86,6 +86,8 @@ let attempts = 0;
 let explosionActive = false;
 let explosionParticles = [];
 let landingSoundPlayed = false; // Control para evitar reproducir sonido de aterrizaje múltiples veces
+let cloudPositions = []; // Posiciones de las nubes para animación
+let cloudSpeed = 0.03; // Velocidad de movimiento de las nubes (muy lenta)
 
 // Sistema de audio
 let audioContext = null;
@@ -105,7 +107,11 @@ const sprites = {
     ufo: null,
     goal: null,
     cloud: null,
-    sun: null
+    sun: null,
+    moonFull: null,
+    moonCrescent: null,
+    moonWaning: null,
+    moonHalf: null
 };
 
 // Función para cargar una imagen
@@ -140,6 +146,12 @@ async function loadSprites() {
         sprites.goal = await loadImage('sprites/environment/goal.svg');
         sprites.cloud = await loadImage('sprites/environment/cloud.svg');
         sprites.sun = await loadImage('sprites/environment/sun.svg');
+        
+        // Cargar sprites de luna (diferentes fases)
+        sprites.moonFull = await loadImage('sprites/environment/moon_full.svg');
+        sprites.moonCrescent = await loadImage('sprites/environment/moon_crescent.svg');
+        sprites.moonWaning = await loadImage('sprites/environment/moon_waning.svg');
+        sprites.moonHalf = await loadImage('sprites/environment/moon_half.svg');
         
         console.log('Todos los sprites cargados exitosamente');
         return true;
@@ -1341,6 +1353,9 @@ function update() {
     const carHeight = DIMENSIONS.CAR_HEIGHT;
     const groundLevel = POSITIONS.GROUND_LEVEL;
     
+    // Actualizar posición de las nubes (siempre, incluso cuando el juego está pausado)
+    updateClouds();
+    
     // Mover la carretera hacia la izquierda (scroll)
     if (gameState === 'playing' || gameState === 'jumping') {
         currentDistance += roadSpeed;
@@ -1605,7 +1620,7 @@ function drawCanvasButtons() {
     
     // Icono de cambiar coche
     ctx.fillStyle = '#fff';
-    ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Arial`;
+    ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
@@ -1618,14 +1633,14 @@ function drawCanvasButtons() {
     ctx.strokeRect(padding, padding, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
     
     ctx.fillStyle = '#2d3436';
-    ctx.font = `bold ${UI.LEVEL_INFO_FONT_SIZE}px Comic Sans MS`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px Roboto`;
     ctx.textAlign = 'left';
-    ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 25);
+    ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 30);
 }
 
-// Temas de fondo por nivel (cambia cada 2 niveles)
+// Temas de fondo por nivel (cambia cada nivel)
 const backgroundThemes = [
-    // Niveles 1-2: Día soleado
+    // Nivel 1: Día soleado
     {
         skyColors: ['#87ceeb', '#98d8c8', '#f7dc6f'],
         sunColor: '#ffd700',
@@ -1633,7 +1648,7 @@ const backgroundThemes = [
         cloudCount: 3,
         timeOfDay: 'day'
     },
-    // Niveles 3-4: Atardecer
+    // Nivel 2: Atardecer
     {
         skyColors: ['#ff6b6b', '#ffa500', '#ffd700', '#ff6347'],
         sunColor: '#ff8c00',
@@ -1641,16 +1656,17 @@ const backgroundThemes = [
         cloudCount: 4,
         timeOfDay: 'sunset'
     },
-    // Niveles 5-6: Noche estrellada
+    // Nivel 3: Noche estrellada
     {
         skyColors: ['#191970', '#1a1a2e', '#0f3460'],
         sunColor: '#f0e68c',
         sunPosition: { x: 1050, y: 30 },
         cloudCount: 2,
         timeOfDay: 'night',
-        stars: true
+        stars: true,
+        moonPhase: 'full' // Luna llena
     },
-    // Niveles 7-8: Amanecer
+    // Nivel 4: Amanecer
     {
         skyColors: ['#ff69b4', '#ffb6c1', '#ffd700', '#87ceeb'],
         sunColor: '#ff4500',
@@ -1658,7 +1674,7 @@ const backgroundThemes = [
         cloudCount: 3,
         timeOfDay: 'sunrise'
     },
-    // Niveles 9-10: Día nublado
+    // Nivel 5: Día nublado
     {
         skyColors: ['#b0c4de', '#d3d3d3', '#c0c0c0'],
         sunColor: '#d3d3d3',
@@ -1666,7 +1682,7 @@ const backgroundThemes = [
         cloudCount: 5,
         timeOfDay: 'cloudy'
     },
-    // Niveles 11-12: Día tropical
+    // Nivel 6: Día tropical
     {
         skyColors: ['#4ecdc4', '#44a08d', '#f7b733'],
         sunColor: '#ffd700',
@@ -1674,7 +1690,7 @@ const backgroundThemes = [
         cloudCount: 2,
         timeOfDay: 'day'
     },
-    // Niveles 13-14: Atardecer púrpura
+    // Nivel 7: Atardecer púrpura
     {
         skyColors: ['#667eea', '#764ba2', '#f093fb'],
         sunColor: '#ff6b9d',
@@ -1682,16 +1698,17 @@ const backgroundThemes = [
         cloudCount: 3,
         timeOfDay: 'sunset'
     },
-    // Niveles 15-16: Noche azul profundo
+    // Nivel 8: Noche azul profundo
     {
         skyColors: ['#0c0c0c', '#1a237e', '#283593'],
         sunColor: '#ffffff',
         sunPosition: { x: 1050, y: 30 },
         cloudCount: 1,
         timeOfDay: 'night',
-        stars: true
+        stars: true,
+        moonPhase: 'crescent' // Luna creciente
     },
-    // Niveles 17-18: Día desértico
+    // Nivel 9: Día desértico
     {
         skyColors: ['#ffeaa7', '#fdcb6e', '#e17055'],
         sunColor: '#ff7675',
@@ -1699,19 +1716,103 @@ const backgroundThemes = [
         cloudCount: 0,
         timeOfDay: 'day'
     },
-    // Niveles 19-20: Tormenta
+    // Nivel 10: Tormenta
     {
         skyColors: ['#636e72', '#2d3436', '#000000'],
         sunColor: '#95a5a6',
         sunPosition: { x: 1050, y: 30 },
         cloudCount: 6,
         timeOfDay: 'cloudy'
+    },
+    // Nivel 11: Cielo rosa suave
+    {
+        skyColors: ['#ffc0cb', '#ffb6c1', '#ff91a4'],
+        sunColor: '#ff69b4',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 4,
+        timeOfDay: 'day'
+    },
+    // Nivel 12: Atardecer dorado
+    {
+        skyColors: ['#ffd89b', '#ffecd2', '#fcb69f'],
+        sunColor: '#ff8c42',
+        sunPosition: { x: 1000, y: 150 },
+        cloudCount: 3,
+        timeOfDay: 'sunset'
+    },
+    // Nivel 13: Cielo verde menta
+    {
+        skyColors: ['#a8e6cf', '#dcedc1', '#ffd3a5'],
+        sunColor: '#ffd700',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 2,
+        timeOfDay: 'day'
+    },
+    // Nivel 14: Noche violeta
+    {
+        skyColors: ['#2d1b69', '#11998e', '#38ef7d'],
+        sunColor: '#e0e0e0',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 1,
+        timeOfDay: 'night',
+        stars: true,
+        moonPhase: 'waning' // Luna menguante
+    },
+    // Nivel 15: Cielo azul claro
+    {
+        skyColors: ['#74b9ff', '#0984e3', '#00b894'],
+        sunColor: '#fdcb6e',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 3,
+        timeOfDay: 'day'
+    },
+    // Nivel 16: Atardecer naranja intenso
+    {
+        skyColors: ['#ff7675', '#fd79a8', '#fdcb6e'],
+        sunColor: '#e17055',
+        sunPosition: { x: 1000, y: 150 },
+        cloudCount: 4,
+        timeOfDay: 'sunset'
+    },
+    // Nivel 17: Cielo gris perla
+    {
+        skyColors: ['#dfe6e9', '#b2bec3', '#636e72'],
+        sunColor: '#b2bec3',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 6,
+        timeOfDay: 'cloudy'
+    },
+    // Nivel 18: Amanecer rojo
+    {
+        skyColors: ['#ff4757', '#ff6348', '#ffa502'],
+        sunColor: '#ff6348',
+        sunPosition: { x: 200, y: 100 },
+        cloudCount: 2,
+        timeOfDay: 'sunrise'
+    },
+    // Nivel 19: Cielo índigo
+    {
+        skyColors: ['#4834d4', '#686de0', '#30336b'],
+        sunColor: '#f0932b',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 2,
+        timeOfDay: 'day'
+    },
+    // Nivel 20: Noche estrellada final
+    {
+        skyColors: ['#000000', '#1a1a2e', '#16213e'],
+        sunColor: '#ffffff',
+        sunPosition: { x: 1050, y: 30 },
+        cloudCount: 0,
+        timeOfDay: 'night',
+        stars: true,
+        moonPhase: 'half' // Media luna
     }
 ];
 
-// Obtener tema de fondo según el nivel (cambia cada 2 niveles)
+// Obtener tema de fondo según el nivel (cambia cada nivel)
 function getBackgroundTheme(level) {
-    const themeIndex = Math.min(Math.floor((level - 1) / 2), backgroundThemes.length - 1);
+    const themeIndex = Math.min(level - 1, backgroundThemes.length - 1);
     return backgroundThemes[themeIndex];
 }
 
@@ -1741,20 +1842,116 @@ function drawBackground() {
     }
     
     // Sol/Luna según el tema
-    if (sprites.sun) {
-        const sunSize = theme.timeOfDay === 'night' ? 80 : 100;
-        ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
-        ctx.drawImage(sprites.sun, theme.sunPosition.x, theme.sunPosition.y, sunSize, sunSize);
-        ctx.globalAlpha = 1;
+    if (theme.timeOfDay === 'night' && theme.moonPhase) {
+        // Dibujar luna con fase correspondiente
+        let moonSprite = null;
+        switch(theme.moonPhase) {
+            case 'full':
+                moonSprite = sprites.moonFull;
+                break;
+            case 'crescent':
+                moonSprite = sprites.moonCrescent;
+                break;
+            case 'waning':
+                moonSprite = sprites.moonWaning;
+                break;
+            case 'half':
+                moonSprite = sprites.moonHalf;
+                break;
+            default:
+                moonSprite = sprites.moonFull;
+        }
+        
+        if (moonSprite) {
+            const moonSize = 80;
+            ctx.globalAlpha = 1;
+            ctx.drawImage(moonSprite, theme.sunPosition.x, theme.sunPosition.y, moonSize, moonSize);
+            ctx.globalAlpha = 1;
+        } else {
+            // Fallback si el sprite no está cargado
+            ctx.fillStyle = theme.sunColor;
+            ctx.globalAlpha = 1;
+            const moonSize = 40;
+            ctx.beginPath();
+            ctx.arc(theme.sunPosition.x + moonSize, theme.sunPosition.y + moonSize, moonSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
     } else {
-        // Fallback si el sprite no está cargado
-        ctx.fillStyle = theme.sunColor;
-        ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
-        const sunSize = theme.timeOfDay === 'night' ? 40 : 50;
-        ctx.beginPath();
-        ctx.arc(theme.sunPosition.x + sunSize, theme.sunPosition.y + sunSize, sunSize, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        // Dibujar sol para temas diurnos
+        if (sprites.sun) {
+            const sunSize = theme.timeOfDay === 'cloudy' ? 80 : 100;
+            ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
+            ctx.drawImage(sprites.sun, theme.sunPosition.x, theme.sunPosition.y, sunSize, sunSize);
+            ctx.globalAlpha = 1;
+        } else {
+            // Fallback si el sprite no está cargado
+            ctx.fillStyle = theme.sunColor;
+            ctx.globalAlpha = theme.timeOfDay === 'cloudy' ? 0.5 : 1;
+            const sunSize = 50;
+            ctx.beginPath();
+            ctx.arc(theme.sunPosition.x + sunSize, theme.sunPosition.y + sunSize, sunSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+}
+
+// Inicializar posiciones de nubes
+function initializeCloudPositions() {
+    const theme = getBackgroundTheme(currentLevel);
+    cloudPositions = [];
+    
+    // Posiciones base para las nubes
+    const basePositions = [
+        { x: 150, y: 70 },
+        { x: 450, y: 120 },
+        { x: 750, y: 90 },
+        { x: 300, y: 50 },
+        { x: 900, y: 100 },
+        { x: 1100, y: 80 }
+    ];
+    
+    // Crear posiciones iniciales para cada nube según el tema
+    for (let i = 0; i < theme.cloudCount; i++) {
+        const basePos = basePositions[i % basePositions.length];
+        // Agregar variación aleatoria para que no todas empiecen igual
+        cloudPositions.push({
+            x: basePos.x + (Math.random() * 200 - 100),
+            y: basePos.y + (Math.random() * 40 - 20),
+            speed: cloudSpeed + (Math.random() * 0.015) // Velocidad ligeramente variable por nube
+        });
+    }
+}
+
+// Actualizar posiciones de nubes
+function updateClouds() {
+    if (!canvas) return;
+    
+    const theme = getBackgroundTheme(currentLevel);
+    
+    // Si el número de nubes cambió, reinicializar
+    if (cloudPositions.length !== theme.cloudCount) {
+        initializeCloudPositions();
+    }
+    
+    // Si no hay posiciones inicializadas, inicializar
+    if (cloudPositions.length === 0) {
+        initializeCloudPositions();
+    }
+    
+    // Actualizar posición de cada nube
+    for (let i = 0; i < cloudPositions.length; i++) {
+        cloudPositions[i].x += cloudPositions[i].speed;
+        
+        // Si la nube sale por la derecha, reaparecer por la izquierda
+        if (cloudPositions[i].x > canvas.width + 100) {
+            cloudPositions[i].x = -100;
+        }
+        // Si la nube sale por la izquierda, reaparecer por la derecha (por si acaso)
+        if (cloudPositions[i].x < -100) {
+            cloudPositions[i].x = canvas.width + 100;
+        }
     }
 }
 
@@ -1763,35 +1960,25 @@ function drawClouds() {
     const theme = getBackgroundTheme(currentLevel);
     const cloudOpacity = theme.timeOfDay === 'night' ? 0.3 : (theme.timeOfDay === 'cloudy' ? 0.9 : 0.8);
     
+    // Asegurar que las posiciones estén inicializadas
+    if (cloudPositions.length === 0 || cloudPositions.length !== theme.cloudCount) {
+        initializeCloudPositions();
+    }
+    
     if (sprites.cloud) {
         // Dibujar nubes usando sprite según el tema
-        const cloudPositions = [
-            { x: 150, y: 70 },
-            { x: 450, y: 120 },
-            { x: 750, y: 90 },
-            { x: 300, y: 50 },
-            { x: 900, y: 100 }
-        ];
-        
         ctx.globalAlpha = cloudOpacity;
         for (let i = 0; i < theme.cloudCount; i++) {
-            const pos = cloudPositions[i % cloudPositions.length];
+            const pos = cloudPositions[i];
             ctx.drawImage(sprites.cloud, pos.x, pos.y, 100, 60);
         }
         ctx.globalAlpha = 1;
     } else {
         // Fallback si el sprite no está cargado
         ctx.fillStyle = `rgba(255, 255, 255, ${cloudOpacity})`;
-        const cloudPositions = [
-            { x: 200, y: 100 },
-            { x: 500, y: 150 },
-            { x: 800, y: 120 },
-            { x: 350, y: 80 },
-            { x: 950, y: 130 }
-        ];
         
         for (let i = 0; i < theme.cloudCount; i++) {
-            const pos = cloudPositions[i % cloudPositions.length];
+            const pos = cloudPositions[i];
             drawCloud(pos.x, pos.y);
         }
     }
@@ -1905,7 +2092,7 @@ function drawObstacles() {
             // Señal de peligro (emoji de advertencia) - solo para algunos tipos
             if (obstacleType !== 'tree' && obstacleType !== 'ufo') {
                 // Los árboles son más altos y los platillos volantes están en el aire, no necesitan el emoji arriba
-                ctx.font = '20px Arial';
+                ctx.font = 'bold 28px Roboto';
                 ctx.textAlign = 'center';
                 ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
             }
@@ -1913,6 +2100,7 @@ function drawObstacles() {
     });
 }
 
+// Dibujar meta estilo carreras (bandera a cuadros)
 // Dibujar meta estilo carreras (bandera a cuadros)
 function drawGoal() {
     const distanceToGoal = currentLevelData.goalDistance - currentDistance;
@@ -1965,10 +2153,10 @@ function drawGoal() {
         
         // Texto "META" con efecto
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 24px Comic Sans MS';
+        ctx.font = '700 36px Roboto';
         ctx.textAlign = 'center';
         ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.strokeText('META', goalScreenX + goalWidth / 2, goalY - GOAL_VISUAL.TEXT_OFFSET_Y);
         ctx.fillText('META', goalScreenX + goalWidth / 2, goalY - GOAL_VISUAL.TEXT_OFFSET_Y);
     }
@@ -2193,7 +2381,16 @@ function showMessage(title, text, showNextLevel = false, showRestartFromLevel1 =
     stopEngineSound();
     
     document.getElementById('messageTitle').textContent = title;
-    document.getElementById('messageText').textContent = text;
+    // Permitir saltos de línea en el texto del mensaje
+    const messageTextElement = document.getElementById('messageText');
+    messageTextElement.textContent = '';
+    const lines = text.split('\n');
+    lines.forEach((line, index) => {
+        if (index > 0) {
+            messageTextElement.appendChild(document.createElement('br'));
+        }
+        messageTextElement.appendChild(document.createTextNode(line));
+    });
     document.getElementById('nextLevelButton').style.display = showNextLevel ? 'inline-block' : 'none';
     document.getElementById('restartFromLevel1Button').style.display = showRestartFromLevel1 ? 'inline-block' : 'none';
     // Ocultar botón de reintentar cuando se muestre el botón de reiniciar desde nivel 1
@@ -2213,6 +2410,9 @@ function resetGame() {
     roadScrollX = 0;
     attempts = 0;
     gameState = selectedCar ? 'playing' : 'selecting';
+    
+    // Reinicializar posiciones de nubes cuando se reinicia el juego
+    initializeCloudPositions();
     
     // Actualizar velocidad según el nivel actual
     roadSpeed = getRoadSpeedForLevel(currentLevel);
@@ -2253,7 +2453,41 @@ function restartFromLevel1() {
     attempts = 0;
     currentDistance = 0;
     roadScrollX = 0;
+    
+    // Seleccionar un coche aleatorio para el nivel 1
+    selectRandomCar();
+    
     resetGame();
+}
+
+// Seleccionar un coche aleatorio
+function selectRandomCar() {
+    if (cars.length === 0) return;
+    
+    // Seleccionar un índice aleatorio
+    const randomIndex = Math.floor(Math.random() * cars.length);
+    const randomCar = cars[randomIndex];
+    
+    // Seleccionar el coche sin mostrar el panel de selección
+    selectedCar = randomCar;
+    
+    // Actualizar la selección visual en el panel (si existe)
+    document.querySelectorAll('.car-option').forEach((opt, index) => {
+        opt.classList.remove('selected');
+        if (cars[index].id === randomCar.id) {
+            opt.classList.add('selected');
+        }
+    });
+    
+    // Aplicar valores pre-fijados del coche
+    angle = randomCar.baseAngle;
+    speed = randomCar.baseSpeed;
+    acceleration = randomCar.baseAcceleration;
+    
+    // Aplicar tema visual del coche seleccionado
+    applyCarTheme(randomCar);
+    
+    console.log(`Coche aleatorio seleccionado para nivel ${currentLevel}: ${randomCar.name}`);
 }
 
 // Siguiente nivel
@@ -2266,6 +2500,10 @@ function nextLevel() {
         attempts = 0;
         currentDistance = 0;
         roadScrollX = 0;
+        
+        // Seleccionar un coche aleatorio para este nivel
+        selectRandomCar();
+        
         resetGame();
     } else {
         // Completaste todos los niveles
