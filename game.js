@@ -1023,6 +1023,18 @@ async function init() {
     setupCarSelection();
     setupControls();
     setupEventListeners();
+    setupCanvasButtons();
+    
+    // Actualizar sprites de los botones después de cargar
+    const changeCarButton = document.getElementById('changeCarButton');
+    const configButton = document.getElementById('configButton');
+    if (changeCarButton) {
+        updateButtonSprite(changeCarButton, sprites.carIcon, 'sprites/environment/car_icon.svg');
+    }
+    if (configButton) {
+        updateButtonSprite(configButton, sprites.settings, 'sprites/environment/settings.svg');
+    }
+    
     resetGame();
 }
 
@@ -1108,6 +1120,13 @@ function selectCar(car, element = null) {
     setTimeout(() => {
         document.getElementById('carSelectionPanel').style.display = 'none';
         document.getElementById('gamePanel').style.display = 'flex';
+        // Mostrar botones HTML del canvas
+        const changeCarButton = document.getElementById('changeCarButton');
+        const configButton = document.getElementById('configButton');
+        if (changeCarButton) changeCarButton.style.display = 'flex';
+        if (configButton) configButton.style.display = 'flex';
+        // Actualizar posición de los botones
+        setTimeout(() => updateCanvasButtonsPosition(), 100);
         gameState = 'playing';
         resetGame();
         draw();
@@ -1155,18 +1174,22 @@ function resetDefaultTheme() {
 
 // Mostrar panel de configuración
 function showConfigPanel() {
-    // Solo permitir abrir configuración si el juego está en ejecución
-    if (gameState !== 'playing' && gameState !== 'jumping') return;
+    // Permitir abrir configuración en cualquier momento (incluso con mensajes visibles)
+    // Guardar el estado actual si el juego está en ejecución
+    if (gameState === 'playing' || gameState === 'jumping') {
+        previousGameState = gameState;
+        gamePaused = true;
+        gameState = 'paused';
+        
+        // Detener el sonido del motor
+        stopEngineSound();
+    } else {
+        // Si hay un mensaje visible, guardar el estado para poder restaurarlo
+        previousGameState = gameState;
+        gamePaused = true;
+    }
     
-    // Guardar el estado actual y pausar el juego
-    previousGameState = gameState;
-    gamePaused = true;
-    gameState = 'paused';
-    
-    // Detener el sonido del motor
-    stopEngineSound();
-    
-    // Mostrar el panel
+    // Mostrar el panel (con z-index más alto que el mensaje)
     document.getElementById('configOverlay').style.display = 'flex';
     updateConfigSpeedDisplay();
 }
@@ -1178,17 +1201,19 @@ function hideConfigPanel() {
     
     // Reanudar el juego si estaba en ejecución
     if (gamePaused && previousGameState) {
-        gameState = previousGameState;
+        const restoredState = previousGameState;
+        gameState = restoredState;
         gamePaused = false;
         previousGameState = null;
         
         // Reanudar el sonido del motor si estaba en estado playing
-        if (gameState === 'playing') {
+        if (restoredState === 'playing') {
             startEngineSound();
         }
         
-        // Continuar el bucle del juego si es necesario
-        if (gameState === 'playing' || gameState === 'jumping') {
+        // Continuar el bucle del juego si es necesario (solo si no hay mensaje visible)
+        if ((restoredState === 'playing' || restoredState === 'jumping') && 
+            restoredState !== 'won' && restoredState !== 'lost') {
             if (!gameLoopRunning) {
                 gameLoop();
             }
@@ -1293,18 +1318,32 @@ function playDecelerationSound() {
 
 // Cambiar coche (volver al panel de selección sin perder el nivel)
 function changeCar() {
-    // Solo permitir cambiar coche si no está saltando
-    if (isJumping || gameState === 'jumping' || gameState === 'exploded') {
+    // Permitir cambiar coche en cualquier momento (incluso con mensajes visibles)
+    // Solo evitar si está explotando activamente
+    if (gameState === 'exploded' && explosionActive) {
         return;
     }
     
     // Detener sonido del motor cuando se vuelve a selección
     stopEngineSound();
     
+    // Ocultar paneles de mensajes y configuración si están visibles
+    document.getElementById('messageOverlay').style.display = 'none';
+    document.getElementById('configOverlay').style.display = 'none';
+    
     // Ocultar panel de juego y mostrar panel de selección
     document.getElementById('gamePanel').style.display = 'none';
+    // Ocultar botones HTML del canvas
+    const changeCarButton = document.getElementById('changeCarButton');
+    const configButton = document.getElementById('configButton');
+    if (changeCarButton) changeCarButton.style.display = 'none';
+    if (configButton) configButton.style.display = 'none';
     document.getElementById('carSelectionPanel').style.display = 'block';
     gameState = 'selecting';
+    
+    // Resetear flags de pausa
+    gamePaused = false;
+    previousGameState = null;
     
     // Resaltar el coche actualmente seleccionado
     document.querySelectorAll('.car-option').forEach((opt, index) => {
@@ -1322,6 +1361,92 @@ function changeCar() {
 function setupControls() {
     // Los valores están pre-fijados según el coche seleccionado
     // No hay sliders para ajustar
+}
+
+// Configurar botones HTML del canvas
+function setupCanvasButtons() {
+    const changeCarButton = document.getElementById('changeCarButton');
+    const configButton = document.getElementById('configButton');
+    
+    if (changeCarButton) {
+        changeCarButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            changeCar();
+        });
+        // Actualizar sprite del botón cuando esté cargado
+        updateButtonSprite(changeCarButton, sprites.carIcon, 'sprites/environment/car_icon.svg');
+    }
+    
+    if (configButton) {
+        configButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showConfigPanel();
+        });
+        // Actualizar sprite del botón cuando esté cargado
+        updateButtonSprite(configButton, sprites.settings, 'sprites/environment/settings.svg');
+    }
+    
+    // Actualizar posición de los botones cuando cambia el tamaño del canvas
+    updateCanvasButtonsPosition();
+    
+    // Actualizar posición cuando se redimensiona la ventana
+    window.addEventListener('resize', updateCanvasButtonsPosition);
+}
+
+// Actualizar sprite de un botón HTML
+function updateButtonSprite(buttonElement, spriteImage, fallbackPath) {
+    if (!buttonElement) return;
+    
+    const imgElement = buttonElement.querySelector('img');
+    if (!imgElement) return;
+    
+    // Si el sprite está cargado, crear un nuevo elemento img con el sprite
+    if (spriteImage) {
+        // Crear un nuevo elemento img usando el sprite cargado
+        const canvas = document.createElement('canvas');
+        canvas.width = 40;
+        canvas.height = 40;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(spriteImage, 0, 0, 40, 40);
+        
+        // Convertir canvas a data URL
+        const dataURL = canvas.toDataURL();
+        imgElement.src = dataURL;
+    } else {
+        // Usar la ruta de fallback
+        imgElement.src = fallbackPath;
+    }
+}
+
+// Actualizar posición de los botones HTML según el tamaño del canvas
+function updateCanvasButtonsPosition() {
+    const canvas = document.getElementById('gameCanvas');
+    const changeCarButton = document.getElementById('changeCarButton');
+    const configButton = document.getElementById('configButton');
+    
+    if (!canvas || !changeCarButton || !configButton) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const buttonSize = UI.BUTTON_SIZE;
+    const padding = UI.BUTTON_PADDING;
+    
+    // Calcular posición relativa al canvas (en porcentaje para que sea responsive)
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const scaleX = rect.width / canvasWidth;
+    const scaleY = rect.height / canvasHeight;
+    
+    // Botón de cambiar coche (esquina superior derecha)
+    const changeX = (canvasWidth - padding - buttonSize) * scaleX;
+    const changeY = padding * scaleY;
+    changeCarButton.style.left = `${changeX}px`;
+    changeCarButton.style.top = `${changeY}px`;
+    
+    // Botón de configuración (debajo del botón de cambiar coche)
+    const configX = (canvasWidth - padding - buttonSize) * scaleX;
+    const configY = (padding + buttonSize + 10) * scaleY;
+    configButton.style.left = `${configX}px`;
+    configButton.style.top = `${configY}px`;
 }
 
 // Actualizar displays de controles (ya no se usa, pero se mantiene para compatibilidad)
@@ -1356,32 +1481,10 @@ function setupEventListeners() {
         return { x, y };
     }
     
-    // Función para verificar si se tocó un botón
+    // Función para verificar si se tocó un botón (ya no se usa, los botones HTML manejan los clics)
     function checkButtonClick(x, y) {
-        // Botón de cambiar coche (esquina superior derecha)
-        const changeX = canvas.width - padding - buttonSize;
-        const changeY = padding;
-        const changeCenterX = changeX + buttonSize/2;
-        const changeCenterY = changeY + buttonSize/2;
-        const changeDist = Math.sqrt((x - changeCenterX) ** 2 + (y - changeCenterY) ** 2);
-        
-        if (changeDist <= buttonSize/2) {
-            changeCar();
-            return true;
-        }
-        
-        // Botón de configuración (esquina superior derecha, debajo del botón de cambiar coche)
-        const configX = canvas.width - padding - buttonSize;
-        const configY = padding + buttonSize + 10;
-        const configCenterX = configX + buttonSize/2;
-        const configCenterY = configY + buttonSize/2;
-        const configDist = Math.sqrt((x - configCenterX) ** 2 + (y - configCenterY) ** 2);
-        
-        if (configDist <= buttonSize/2) {
-            showConfigPanel();
-            return true;
-        }
-        
+        // Los botones ahora son HTML y manejan sus propios clics
+        // Esta función se mantiene por compatibilidad pero siempre retorna false
         return false;
     }
     
@@ -1797,46 +1900,13 @@ function draw() {
     drawCanvasButtons();
 }
 
-// Dibujar botones dentro del canvas
+// Dibujar información en el canvas (nivel y velocidad)
 function drawCanvasButtons() {
     if (!canvas || !ctx) return;
     
-    const buttonSize = UI.BUTTON_SIZE;
     const padding = UI.BUTTON_PADDING;
     
-    // Botón de cambiar coche (esquina superior derecha)
-    const changeX = canvas.width - padding - buttonSize;
-    const changeY = padding;
-    
-    // Fondo del botón
-    ctx.fillStyle = 'rgba(162, 155, 254, 0.8)';
-    ctx.beginPath();
-    ctx.arc(changeX + buttonSize/2, changeY + buttonSize/2, buttonSize/2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Borde
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Dibujar sprite de coche
-    if (sprites.carIcon) {
-        const iconPadding = 10;
-        ctx.drawImage(
-            sprites.carIcon,
-            changeX + iconPadding,
-            changeY + iconPadding,
-            buttonSize - iconPadding * 2,
-            buttonSize - iconPadding * 2
-        );
-    } else {
-        // Fallback si el sprite no está cargado
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🚗', changeX + buttonSize/2, changeY + buttonSize/2);
-    }
+    // Los botones ahora son HTML, solo dibujamos la información del nivel y velocidad
     
     // Información del nivel (esquina superior izquierda)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
@@ -1866,39 +1936,7 @@ function drawCanvasButtons() {
     ctx.textAlign = 'left';
     ctx.fillText(`${speedKmh} km/h`, padding + 10, speedDisplayY + 25);
     
-    // Botón de configuración (esquina superior derecha, debajo del botón de cambiar coche)
-    const configX = canvas.width - padding - buttonSize;
-    const configY = padding + buttonSize + 10;
-    
-    // Fondo del botón (gris para configuración)
-    ctx.fillStyle = 'rgba(108, 117, 125, 0.9)';
-    ctx.beginPath();
-    ctx.arc(configX + buttonSize/2, configY + buttonSize/2, buttonSize/2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Borde
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // Dibujar sprite de configuración
-    if (sprites.settings) {
-        const iconPadding = 10;
-        ctx.drawImage(
-            sprites.settings,
-            configX + iconPadding,
-            configY + iconPadding,
-            buttonSize - iconPadding * 2,
-            buttonSize - iconPadding * 2
-        );
-    } else {
-        // Fallback si el sprite no está cargado
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${UI.BUTTON_ICON_FONT_SIZE}px Roboto`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⚙️', configX + buttonSize/2, configY + buttonSize/2);
-    }
+    // Los botones ahora son HTML y se dibujan por encima del canvas
 }
 
 // Temas de fondo por nivel (cambia cada nivel)

@@ -213,6 +213,47 @@ body::before {
     flex-direction: column;
     width: 100%;
     height: 100%;
+    position: relative;
+}
+
+/* Botones HTML por encima del canvas y mensajes */
+.canvas-button {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1002; /* Por encima del message-overlay (1000) y message-content */
+    padding: 0;
+    transition: transform 0.2s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.canvas-button:hover {
+    transform: scale(1.1);
+}
+
+.canvas-button:active {
+    transform: scale(0.95);
+}
+
+.change-car-button-html {
+    background: rgba(162, 155, 254, 0.9);
+}
+
+.config-button-html {
+    background: rgba(108, 117, 125, 0.9);
+}
+
+.button-sprite {
+    width: 40px;
+    height: 40px;
+    filter: brightness(0) invert(1); /* Hacer el icono blanco */
+    pointer-events: none; /* Permitir que el clic pase al botón */
 }
 
 .controls-panel {
@@ -470,6 +511,11 @@ body::before {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    pointer-events: none; /* Permitir que los clics pasen a través del fondo */
+}
+
+.message-overlay .message-content {
+    pointer-events: auto; /* Solo el contenido del mensaje captura clics */
 }
 
 .message-content {
@@ -560,7 +606,7 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1001; /* Más alto que message-overlay para aparecer encima */
 }
 
 .config-content {
