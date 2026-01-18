@@ -9,9 +9,9 @@ const APP_VERSION = '1.2.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // FÍSICA DEL SALTO
 const JUMP_PHYSICS = {
-    GRAVITY: 0.18,                    // Gravedad base para Monster Trucks (menor = cae más lento, mayor = cae más rápido)
-    GRAVITY_BUS: 0.22,                 // Gravedad para buses (ligeramente mayor)
-    GRAVITY_F1: 0.15,                  // Gravedad para F1 (ligeramente menor)
+    GRAVITY: 0.2,                    // Gravedad base para Monster Trucks (menor = cae más lento, mayor = cae más rápido)
+    GRAVITY_BUS: 0.25,                 // Gravedad para buses (ligeramente mayor)
+    GRAVITY_F1: 0.18,                  // Gravedad para F1 (ligeramente menor)
     JUMP_VELOCITY_MULTIPLIER: 2.0,   // Factor multiplicador de velocidad inicial (mayor = saltos más altos)
 };
 
@@ -322,8 +322,8 @@ const cars = [
         baseAngle: CAR_BASE_STATS.ANGLE,
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
-        description: 'Monster Truck Naranja',
-        vehicleType: 'monster_truck',
+        description: 'Bus Naranja',
+        vehicleType: 'bus',
         theme: {
             primary: '#ff8c00',
             secondary: '#ff4500',
@@ -339,8 +339,8 @@ const cars = [
         baseAngle: CAR_BASE_STATS.ANGLE,
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
-        description: 'Monster Truck Morado',
-        vehicleType: 'monster_truck',
+        description: 'Bus Morado',
+        vehicleType: 'bus',
         theme: {
             primary: '#9370db',
             secondary: '#8a2be2',
@@ -356,8 +356,8 @@ const cars = [
         baseAngle: CAR_BASE_STATS.ANGLE,
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
-        description: 'Monster Truck Turquesa',
-        vehicleType: 'monster_truck',
+        description: 'Bus Turquesa',
+        vehicleType: 'bus',
         theme: {
             primary: '#40e0d0',
             secondary: '#00ced1',
@@ -373,8 +373,8 @@ const cars = [
         baseAngle: CAR_BASE_STATS.ANGLE,
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
-        description: 'Monster Truck Rosa',
-        vehicleType: 'monster_truck',
+        description: 'Bus Rosa',
+        vehicleType: 'bus',
         theme: {
             primary: '#ff69b4',
             secondary: '#ff1493',
@@ -2352,6 +2352,40 @@ function drawCanvasButtons() {
     ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px Roboto`;
     ctx.textAlign = 'left';
     ctx.fillText(`${speedKmh} km/h`, padding + 10, speedDisplayY + 25);
+    
+    // Indicador de gravedad (debajo de la velocidad, más pequeño)
+    const gravityDisplayY = speedDisplayY + speedDisplayHeight + 8;
+    const gravityDisplayHeight = 25;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillRect(padding, gravityDisplayY, UI.LEVEL_INFO_WIDTH, gravityDisplayHeight);
+    ctx.strokeStyle = '#2d3436';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(padding, gravityDisplayY, UI.LEVEL_INFO_WIDTH, gravityDisplayHeight);
+    
+    // Obtener gravedad actual según el tipo de vehículo
+    const vehicleType = selectedCar?.vehicleType || 'monster_truck';
+    let currentGravity;
+    let gravityLabel;
+    switch(vehicleType) {
+        case 'bus':
+            currentGravity = JUMP_PHYSICS.GRAVITY_BUS;
+            gravityLabel = 'Bus';
+            break;
+        case 'f1':
+            currentGravity = JUMP_PHYSICS.GRAVITY_F1;
+            gravityLabel = 'F1';
+            break;
+        case 'monster_truck':
+        default:
+            currentGravity = JUMP_PHYSICS.GRAVITY;
+            gravityLabel = 'MT';
+            break;
+    }
+    
+    ctx.fillStyle = '#2d3436';
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 8}px Roboto`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`G (${gravityLabel}): ${currentGravity.toFixed(2)}`, padding + 8, gravityDisplayY + 18);
     
     // Los botones ahora son HTML y se dibujan por encima del canvas
 }
