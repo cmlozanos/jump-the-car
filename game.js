@@ -1,4 +1,9 @@
 // ============================================================================
+// VERSIÓN DE LA APLICACIÓN
+// ============================================================================
+const APP_VERSION = '1.2.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+
+// ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
 // ============================================================================
 
@@ -36,6 +41,8 @@ const SPEED = {
     ROAD_SCROLL: 1.5,                 // Velocidad de desplazamiento de la carretera (unidades de distancia por frame)
     ROAD_LINE_OFFSET: 40,             // Offset para animación de líneas de la carretera
     PIXELS_PER_DISTANCE_UNIT: 1.0,    // Escala: píxeles por unidad de distancia (ajustar si es necesario)
+    MIN_MULTIPLIER: 0.5,              // Multiplicador mínimo de velocidad (50% de velocidad base)
+    MAX_MULTIPLIER: 3.0,              // Multiplicador máximo de velocidad (300% de velocidad base)
 };
 
 // PARÁMETROS BASE DE LOS COCHES
@@ -107,6 +114,7 @@ const sprites = {
     tree: null,
     hole: null,
     ufo: null,
+    fire: null,
     goal: null,
     cloud: null,
     sun: null,
@@ -134,8 +142,8 @@ function loadImage(src) {
 // Cargar todos los sprites
 async function loadSprites() {
     try {
-        // Cargar sprites de coches (6 coches disponibles)
-        for (let i = 1; i <= 6; i++) {
+        // Cargar sprites de coches (12 coches disponibles)
+        for (let i = 1; i <= 12; i++) {
             sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg`);
         }
         
@@ -148,6 +156,7 @@ async function loadSprites() {
         sprites.tree = await loadImage('sprites/environment/tree.svg');
         sprites.hole = await loadImage('sprites/environment/hole.svg');
         sprites.ufo = await loadImage('sprites/environment/ufo.svg');
+        sprites.fire = await loadImage('sprites/environment/fire.svg');
         
         // Cargar sprites de ambiente
         sprites.goal = await loadImage('sprites/environment/goal.svg');
@@ -297,6 +306,102 @@ const cars = [
             gradient: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
             icon: '⚫'
         }
+    },
+    {
+        id: 7,
+        name: 'Orange Crush 🧡',
+        color: '#ff8c00',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Naranja',
+        theme: {
+            primary: '#ff8c00',
+            secondary: '#ff4500',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #ff8c00 0%, #ff4500 100%)',
+            icon: '🧡'
+        }
+    },
+    {
+        id: 8,
+        name: 'Purple Storm 💜',
+        color: '#9370db',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Morado',
+        theme: {
+            primary: '#9370db',
+            secondary: '#8a2be2',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #9370db 0%, #8a2be2 100%)',
+            icon: '💜'
+        }
+    },
+    {
+        id: 9,
+        name: 'Turquoise Wave 💙',
+        color: '#40e0d0',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Turquesa',
+        theme: {
+            primary: '#40e0d0',
+            secondary: '#00ced1',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #40e0d0 0%, #00ced1 100%)',
+            icon: '💙'
+        }
+    },
+    {
+        id: 10,
+        name: 'Pink Blast 💗',
+        color: '#ff69b4',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Monster Truck Rosa',
+        theme: {
+            primary: '#ff69b4',
+            secondary: '#ff1493',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #ff69b4 0%, #ff1493 100%)',
+            icon: '💗'
+        }
+    },
+    {
+        id: 11,
+        name: 'Red Lightning 🏎️',
+        color: '#dc143c',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Fórmula 1 Rojo',
+        theme: {
+            primary: '#dc143c',
+            secondary: '#8b0000',
+            accent: '#ffd700',
+            gradient: 'linear-gradient(135deg, #dc143c 0%, #8b0000 100%)',
+            icon: '🏎️'
+        }
+    },
+    {
+        id: 12,
+        name: 'Blue Thunder 🏎️',
+        color: '#0066cc',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Fórmula 1 Azul',
+        theme: {
+            primary: '#0066cc',
+            secondary: '#003d7a',
+            accent: '#00ffff',
+            gradient: 'linear-gradient(135deg, #0066cc 0%, #003d7a 100%)',
+            icon: '🏎️'
+        }
     }
 ];
 
@@ -337,7 +442,7 @@ const levels = [
             { distance: 500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 1000, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 1500, y: 360, width: 80, height: 40, type: 'ufo' },
-            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2000, y: 520, width: 50, height: 50, type: 'fire' },
             { distance: 2500, y: 520, width: 60, height: 30, type: 'hole' },
             { distance: 3000, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 3500, y: 340, width: 80, height: 40, type: 'ufo' }
@@ -361,11 +466,11 @@ const levels = [
             { distance: 500, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 1000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 1500, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 2000, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2000, y: 520, width: 50, height: 50, type: 'fire' },
             { distance: 2500, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 3000, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 3500, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 4000, y: 520, width: 40, height: 20, type: 'spikes' },
+            { distance: 4000, y: 520, width: 50, height: 50, type: 'fire' },
             { distance: 4500, y: 380, width: 80, height: 40, type: 'ufo' }
         ]
     },
@@ -375,11 +480,12 @@ const levels = [
             { distance: 600, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 1200, y: 350, width: 80, height: 40, type: 'ufo' },
             { distance: 1800, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 2400, y: 520, width: 40, height: 20, type: 'obstacle' },
+            { distance: 2400, y: 520, width: 50, height: 50, type: 'fire' },
             { distance: 3000, y: 370, width: 80, height: 40, type: 'ufo' },
             { distance: 3600, y: 520, width: 40, height: 20, type: 'spikes' },
             { distance: 4200, y: 520, width: 60, height: 30, type: 'hole' },
-            { distance: 4800, y: 340, width: 80, height: 40, type: 'ufo' }
+            { distance: 4800, y: 340, width: 80, height: 40, type: 'ufo' },
+            { distance: 5100, y: 520, width: 50, height: 50, type: 'fire' }
         ]
     },
     {
@@ -783,8 +889,35 @@ function playJumpSound() {
     }
 }
 
-// Reproducir sonido de choque/crash
-function playCrashSound() {
+// Reproducir sonido de choque según el tipo de obstáculo
+function playCrashSound(obstacleType = 'obstacle') {
+    if (!audioContext) return;
+    
+    switch(obstacleType) {
+        case 'fire':
+            playFireCrashSound();
+            break;
+        case 'spikes':
+            playSpikesCrashSound();
+            break;
+        case 'tree':
+            playTreeCrashSound();
+            break;
+        case 'hole':
+            playHoleCrashSound();
+            break;
+        case 'ufo':
+            playUfoCrashSound();
+            break;
+        case 'obstacle':
+        default:
+            playObstacleCrashSound();
+            break;
+    }
+}
+
+// Sonido de choque genérico (roca/obstáculo)
+function playObstacleCrashSound() {
     if (!audioContext) return;
     
     try {
@@ -795,12 +928,12 @@ function playCrashSound() {
         const gainNode1 = audioContext.createGain();
         
         oscillator1.type = 'sawtooth';
-        oscillator1.frequency.setValueAtTime(100, now); // Frecuencia baja para sonido grave
-        oscillator1.frequency.exponentialRampToValueAtTime(50, now + 0.2); // Bajar la frecuencia
+        oscillator1.frequency.setValueAtTime(100, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(50, now + 0.2);
         
         gainNode1.gain.setValueAtTime(0, now);
-        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01); // Attack muy rápido
-        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.3); // Decay
+        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
         
         oscillator1.connect(gainNode1);
         gainNode1.connect(audioContext.destination);
@@ -808,16 +941,158 @@ function playCrashSound() {
         oscillator1.start(now);
         oscillator1.stop(now + 0.3);
         
-        // Sonido secundario (ruido de impacto)
+        // Sonido de "clank" metálico
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'triangle';
+        oscillator2.frequency.setValueAtTime(300, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.2, now + 0.01);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.15);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de choque:', e);
+    }
+}
+
+// Sonido de choque con fuego
+function playFireCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido de fuego (ruido de alta frecuencia con variación)
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sawtooth';
+        oscillator1.frequency.setValueAtTime(400, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+        oscillator1.frequency.exponentialRampToValueAtTime(300, now + 0.3);
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.5, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.4);
+        
+        // Sonido de explosión
         const oscillator2 = audioContext.createOscillator();
         const gainNode2 = audioContext.createGain();
         
         oscillator2.type = 'square';
         oscillator2.frequency.setValueAtTime(200, now);
-        oscillator2.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+        oscillator2.frequency.exponentialRampToValueAtTime(100, now + 0.2);
         
         gainNode2.gain.setValueAtTime(0, now);
-        gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.005);
+        gainNode2.gain.linearRampToValueAtTime(0.4, now + 0.005);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.25);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de fuego:', e);
+    }
+}
+
+// Sonido de choque con pinchos
+function playSpikesCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido agudo de pinchazo
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'square';
+        oscillator1.frequency.setValueAtTime(800, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.005);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.2);
+        
+        // Sonido de desinflado
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'sawtooth';
+        oscillator2.frequency.setValueAtTime(150, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(50, now + 0.25);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.01);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.3);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de pinchos:', e);
+    }
+}
+
+// Sonido de choque con árbol
+function playTreeCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido de madera quebrada
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sawtooth';
+        oscillator1.frequency.setValueAtTime(120, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.3);
+        
+        // Sonido de crujido
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'square';
+        oscillator2.frequency.setValueAtTime(250, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.01);
         gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
         
         oscillator2.connect(gainNode2);
@@ -825,26 +1100,102 @@ function playCrashSound() {
         
         oscillator2.start(now);
         oscillator2.stop(now + 0.2);
-        
-        // Sonido de "clank" metálico
-        const oscillator3 = audioContext.createOscillator();
-        const gainNode3 = audioContext.createGain();
-        
-        oscillator3.type = 'triangle';
-        oscillator3.frequency.setValueAtTime(300, now);
-        oscillator3.frequency.exponentialRampToValueAtTime(150, now + 0.1);
-        
-        gainNode3.gain.setValueAtTime(0, now);
-        gainNode3.gain.linearRampToValueAtTime(0.2, now + 0.01);
-        gainNode3.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-        
-        oscillator3.connect(gainNode3);
-        gainNode3.connect(audioContext.destination);
-        
-        oscillator3.start(now);
-        oscillator3.stop(now + 0.15);
     } catch (e) {
-        console.warn('Error al reproducir sonido de choque:', e);
+        console.warn('Error al reproducir sonido de árbol:', e);
+    }
+}
+
+// Sonido de choque con agujero
+function playHoleCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido de caída
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'sine';
+        oscillator1.frequency.setValueAtTime(200, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.4, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.4);
+        
+        // Sonido de impacto
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'square';
+        oscillator2.frequency.setValueAtTime(150, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(60, now + 0.2);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.35, now + 0.005);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.25);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de agujero:', e);
+    }
+}
+
+// Sonido de choque con UFO
+function playUfoCrashSound() {
+    if (!audioContext) return;
+    
+    try {
+        const now = audioContext.currentTime;
+        
+        // Sonido de energía/rayo
+        const oscillator1 = audioContext.createOscillator();
+        const gainNode1 = audioContext.createGain();
+        
+        oscillator1.type = 'square';
+        oscillator1.frequency.setValueAtTime(600, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(300, now + 0.2);
+        
+        gainNode1.gain.setValueAtTime(0, now);
+        gainNode1.gain.linearRampToValueAtTime(0.5, now + 0.01);
+        gainNode1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator1.connect(gainNode1);
+        gainNode1.connect(audioContext.destination);
+        
+        oscillator1.start(now);
+        oscillator1.stop(now + 0.3);
+        
+        // Sonido de zumbido
+        const oscillator2 = audioContext.createOscillator();
+        const gainNode2 = audioContext.createGain();
+        
+        oscillator2.type = 'sine';
+        oscillator2.frequency.setValueAtTime(400, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+        
+        gainNode2.gain.setValueAtTime(0, now);
+        gainNode2.gain.linearRampToValueAtTime(0.3, now + 0.01);
+        gainNode2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator2.connect(gainNode2);
+        gainNode2.connect(audioContext.destination);
+        
+        oscillator2.start(now);
+        oscillator2.stop(now + 0.3);
+    } catch (e) {
+        console.warn('Error al reproducir sonido de UFO:', e);
     }
 }
 
@@ -1035,7 +1386,18 @@ async function init() {
         updateButtonSprite(configButton, sprites.settings, 'sprites/environment/settings.svg');
     }
     
+    // Mostrar versión de la aplicación
+    displayAppVersion();
+    
     resetGame();
+}
+
+// Mostrar versión de la aplicación
+function displayAppVersion() {
+    const versionElement = document.getElementById('versionNumber');
+    if (versionElement) {
+        versionElement.textContent = APP_VERSION;
+    }
 }
 
 // Configurar panel de selección de coches
@@ -1235,13 +1597,16 @@ function accelerateCar() {
     // Aumentar el multiplicador de velocidad en 0.2 (20% más rápido)
     speedMultiplier += 0.2;
     
-    // Limitar velocidad máxima (opcional, por ejemplo 3x)
-    if (speedMultiplier > 3.0) {
-        speedMultiplier = 3.0;
+    // Limitar velocidad máxima
+    if (speedMultiplier > SPEED.MAX_MULTIPLIER) {
+        speedMultiplier = SPEED.MAX_MULTIPLIER;
     }
     
     // Actualizar la velocidad actual
     roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
+    // Actualizar display de velocidad
+    updateConfigSpeedDisplay();
     
     // Reproducir sonido de aceleración
     playAccelerationSound();
@@ -1252,13 +1617,16 @@ function decelerateCar() {
     // Disminuir el multiplicador de velocidad en 0.2 (20% más lento)
     speedMultiplier -= 0.2;
     
-    // Limitar velocidad mínima (no puede ser menor que 0.5x)
-    if (speedMultiplier < 0.5) {
-        speedMultiplier = 0.5;
+    // Limitar velocidad mínima
+    if (speedMultiplier < SPEED.MIN_MULTIPLIER) {
+        speedMultiplier = SPEED.MIN_MULTIPLIER;
     }
     
     // Actualizar la velocidad actual
     roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
+    // Actualizar display de velocidad
+    updateConfigSpeedDisplay();
     
     // Reproducir sonido de desaceleración
     playDecelerationSound();
@@ -1597,7 +1965,7 @@ function startJump() {
     const collisionType = checkObstacleCollisions();
     if (collisionType) {
         gameState = 'lost';
-        playCrashSound(); // Reproducir sonido de choque
+        playCrashSound(collisionType); // Reproducir sonido de choque según el tipo
         const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
         showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
         return;
@@ -1701,7 +2069,7 @@ function update() {
             // Colisión con borde del canvas
             gameState = 'lost';
             isJumping = false;
-            playCrashSound(); // Reproducir sonido de choque
+            playCrashSound('obstacle'); // Reproducir sonido de choque genérico
             showMessage('¡Oh no! 😢', 'Chocaste con el borde del camino. ¡Inténtalo de nuevo!');
             return;
         }
@@ -1711,7 +2079,7 @@ function update() {
         if (collisionType) {
             gameState = 'lost';
             isJumping = false;
-            playCrashSound(); // Reproducir sonido de choque
+            playCrashSound(collisionType); // Reproducir sonido de choque según el tipo
             const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
             showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
             return;
@@ -1759,7 +2127,7 @@ function update() {
         const collisionType = checkObstacleCollisions();
         if (collisionType) {
             gameState = 'lost';
-            playCrashSound(); // Reproducir sonido de choque
+            playCrashSound(collisionType); // Reproducir sonido de choque según el tipo
             const obstacleName = obstacleMessages[collisionType] || 'un obstáculo';
             showMessage('¡Oh no! 😢', `Chocaste con ${obstacleName}. ¡Inténtalo de nuevo!`);
             return;
@@ -1795,6 +2163,7 @@ const obstacleMessages = {
     'tree': 'un árbol',
     'hole': 'un agujero',
     'ufo': 'un platillo volante',
+    'fire': 'fuego',
     'obstacle': 'una roca'
 };
 
@@ -2386,6 +2755,9 @@ function drawObstacles() {
                 case 'ufo':
                     spriteToUse = sprites.ufo;
                     break;
+                case 'fire':
+                    spriteToUse = sprites.fire;
+                    break;
                 case 'obstacle':
                 default:
                     spriteToUse = sprites.obstacle;
@@ -2508,8 +2880,8 @@ function explodeCar() {
     isJumping = false;
     gameState = 'exploded';
     
-    // Reproducir sonido de choque cuando explota
-    playCrashSound();
+    // Reproducir sonido de choque cuando explota (sonido genérico)
+    playCrashSound('obstacle');
     
     // Guardar posición donde explotó (centro del coche, limitado al canvas)
     const carWidth = DIMENSIONS.CAR_WIDTH;
@@ -2730,6 +3102,19 @@ function resetGame() {
     currentDistance = 0;
     roadScrollX = 0;
     attempts = 0;
+    
+    // Resetear flags de pausa para evitar que el juego quede parado
+    gamePaused = false;
+    previousGameState = null;
+    
+    // Asegurar que el multiplicador esté dentro de los límites
+    if (speedMultiplier < SPEED.MIN_MULTIPLIER) {
+        speedMultiplier = SPEED.MIN_MULTIPLIER;
+    }
+    if (speedMultiplier > SPEED.MAX_MULTIPLIER) {
+        speedMultiplier = SPEED.MAX_MULTIPLIER;
+    }
+    
     gameState = selectedCar ? 'playing' : 'selecting';
     
     // Reinicializar posiciones de nubes cuando se reinicia el juego
@@ -2737,6 +3122,9 @@ function resetGame() {
     
     // Actualizar velocidad según el nivel actual (manteniendo el multiplicador)
     roadSpeed = getRoadSpeedForLevel(currentLevel);
+    
+    // Actualizar display de velocidad si existe
+    updateConfigSpeedDisplay();
     
     if (selectedCar) {
         // Reestablecer valores del coche seleccionado para mantener consistencia
@@ -2771,10 +3159,17 @@ function restartFromLevel1() {
     currentLevel = 1;
     currentLevelData = levels[0];
     speedMultiplier = 1.0; // Resetear el multiplicador al reiniciar desde el nivel 1
-    roadSpeed = getRoadSpeedForLevel(1);
+    
+    // Resetear flags de pausa
+    gamePaused = false;
+    previousGameState = null;
+    
     attempts = 0;
     currentDistance = 0;
     roadScrollX = 0;
+    
+    // Actualizar velocidad según el nivel 1
+    roadSpeed = getRoadSpeedForLevel(1);
     
     // Seleccionar un coche aleatorio para el nivel 1
     selectRandomCar();
@@ -2817,6 +3212,19 @@ function nextLevel() {
     if (currentLevel < levels.length) {
         currentLevel++;
         currentLevelData = levels[currentLevel - 1];
+        
+        // Resetear flags de pausa
+        gamePaused = false;
+        previousGameState = null;
+        
+        // Asegurar que el multiplicador esté dentro de los límites
+        if (speedMultiplier < SPEED.MIN_MULTIPLIER) {
+            speedMultiplier = SPEED.MIN_MULTIPLIER;
+        }
+        if (speedMultiplier > SPEED.MAX_MULTIPLIER) {
+            speedMultiplier = SPEED.MAX_MULTIPLIER;
+        }
+        
         // Actualizar velocidad según el nivel (aumenta 0.1 por nivel)
         // El multiplicador de velocidad se mantiene entre niveles
         roadSpeed = getRoadSpeedForLevel(currentLevel);

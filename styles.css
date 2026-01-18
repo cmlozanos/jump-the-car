@@ -757,6 +757,34 @@ body::before {
     box-shadow: 0 8px 20px rgba(99, 110, 114, 0.4);
 }
 
+/* Información de versión (discreta) */
+.version-info {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    font-size: 0.7em;
+    color: rgba(45, 52, 54, 0.5);
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    z-index: 999;
+    pointer-events: none;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    backdrop-filter: blur(2px);
+}
+
+/* En pantallas muy pequeñas, hacer aún más discreto */
+@media screen and (max-width: 600px) {
+    .version-info {
+        font-size: 0.6em;
+        bottom: 5px;
+        right: 5px;
+        padding: 3px 6px;
+    }
+}
+
 /* Optimización para tablets */
 @media screen and (min-width: 768px) {
     .config-content {

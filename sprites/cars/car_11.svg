@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Fórmula 1 Rojo - Nariz a la derecha (mirando hacia la izquierda) -->
+  <!-- Nariz delantera (derecha del sprite) -->
+  <ellipse cx="85" cy="60" rx="5" ry="12" fill="#dc143c" stroke="#2d3436" stroke-width="1.5"/>
+  <ellipse cx="85" cy="60" rx="3" ry="8" fill="#ff4500" opacity="0.6"/>
+  <!-- Ala delantera -->
+  <rect x="78" y="50" width="14" height="3" rx="1" fill="#2d3436"/>
+  <!-- Cuerpo principal -->
+  <ellipse cx="55" cy="60" rx="28" ry="16" fill="#dc143c" stroke="#2d3436" stroke-width="2"/>
+  <!-- Detalles del cuerpo -->
+  <ellipse cx="55" cy="58" rx="24" ry="13" fill="#ff4500" opacity="0.3"/>
+  <!-- Cabina -->
+  <path d="M 42 45 Q 55 40 68 45 L 68 55 Q 55 50 42 55 Z" fill="#1a1a1a" opacity="0.9"/>
+  <!-- Ventana de la cabina -->
+  <path d="M 45 47 Q 55 43 65 47 L 65 53 Q 55 49 45 53 Z" fill="#87ceeb" opacity="0.6"/>
+  <!-- Reflejo en ventana -->
+  <path d="M 47 48 Q 55 45 63 48 L 63 50 Q 55 47 47 50 Z" fill="#ffffff" opacity="0.3"/>
+  <!-- Alerón trasero (izquierda del sprite) -->
+  <rect x="32" y="48" width="8" height="20" rx="2" fill="#2d3436"/>
+  <rect x="33" y="42" width="5" height="9" rx="1" fill="#dc143c"/>
+  <rect x="34" y="40" width="3" height="5" rx="0.5" fill="#ff4500"/>
+  <!-- Elementos aerodinámicos laterales -->
+  <rect x="75" y="52" width="2.5" height="10" rx="1" fill="#2d3436"/>
+  <rect x="32" y="52" width="2.5" height="10" rx="1" fill="#2d3436"/>
+  <!-- Ruedas delanteras (derecha) -->
+  <circle cx="82" cy="78" r="8" fill="#1a1a1a"/>
+  <circle cx="82" cy="78" r="6" fill="#2d3436"/>
+  <circle cx="82" cy="78" r="4" fill="#555"/>
+  <circle cx="82" cy="78" r="2.5" fill="#888"/>
+  <circle cx="82" cy="78" r="1.2" fill="#fff"/>
+  <!-- Suspensión delantera -->
+  <rect x="80.5" y="68" width="3" height="8" fill="#444"/>
+  <!-- Ruedas traseras (izquierda) -->
+  <circle cx="32" cy="78" r="8" fill="#1a1a1a"/>
+  <circle cx="32" cy="78" r="6" fill="#2d3436"/>
+  <circle cx="32" cy="78" r="4" fill="#555"/>
+  <circle cx="32" cy="78" r="2.5" fill="#888"/>
+  <circle cx="32" cy="78" r="1.2" fill="#fff"/>
+  <!-- Suspensión trasera -->
+  <rect x="30.5" y="68" width="3" height="8" fill="#444"/>
+  <!-- Línea decorativa -->
+  <line x1="40" y1="55" x2="75" y2="55" stroke="#ffd700" stroke-width="2"/>
+  <line x1="40" y1="58" x2="75" y2="58" stroke="#ffd700" stroke-width="1"/>
+  <!-- Logo/Número -->
+  <circle cx="55" cy="60" r="7" fill="#ffd700" opacity="0.9"/>
+  <text x="55" y="64" font-family="Arial Black" font-size="9" font-weight="bold" fill="#dc143c" text-anchor="middle">1</text>
+  <!-- Detalles adicionales -->
+  <circle cx="50" cy="62" r="1.2" fill="#ffd700"/>
+  <circle cx="60" cy="62" r="1.2" fill="#ffd700"/>
+</svg>
