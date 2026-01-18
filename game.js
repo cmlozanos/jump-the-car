@@ -9,7 +9,9 @@ const APP_VERSION = '1.2.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // FÍSICA DEL SALTO
 const JUMP_PHYSICS = {
-    GRAVITY: 0.18,                    // Gravedad (menor = cae más lento, mayor = cae más rápido)
+    GRAVITY: 0.18,                    // Gravedad base para Monster Trucks (menor = cae más lento, mayor = cae más rápido)
+    GRAVITY_BUS: 0.22,                 // Gravedad para buses (ligeramente mayor)
+    GRAVITY_F1: 0.15,                  // Gravedad para F1 (ligeramente menor)
     JUMP_VELOCITY_MULTIPLIER: 2.0,   // Factor multiplicador de velocidad inicial (mayor = saltos más altos)
 };
 
@@ -219,6 +221,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Rojo',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#dc143c',
             secondary: '#ff4500',
@@ -235,6 +238,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Amarillo',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#ffd700',
             secondary: '#ff8c00',
@@ -251,6 +255,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Azul',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#00bfff',
             secondary: '#0066cc',
@@ -267,6 +272,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Verde',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#00ff7f',
             secondary: '#228b22',
@@ -283,6 +289,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Multicolor',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#ff00ff',
             secondary: '#00ffff',
@@ -299,6 +306,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Negro',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#1a1a1a',
             secondary: '#2d2d2d',
@@ -315,6 +323,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Naranja',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#ff8c00',
             secondary: '#ff4500',
@@ -331,6 +340,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Morado',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#9370db',
             secondary: '#8a2be2',
@@ -347,6 +357,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Turquesa',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#40e0d0',
             secondary: '#00ced1',
@@ -363,6 +374,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Monster Truck Rosa',
+        vehicleType: 'monster_truck',
         theme: {
             primary: '#ff69b4',
             secondary: '#ff1493',
@@ -379,6 +391,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Fórmula 1 Rojo',
+        vehicleType: 'f1',
         theme: {
             primary: '#dc143c',
             secondary: '#8b0000',
@@ -395,6 +408,7 @@ const cars = [
         baseSpeed: CAR_BASE_STATS.SPEED,
         baseAcceleration: CAR_BASE_STATS.ACCELERATION,
         description: 'Fórmula 1 Azul',
+        vehicleType: 'f1',
         theme: {
             primary: '#0066cc',
             secondary: '#003d7a',
@@ -2056,7 +2070,21 @@ function update() {
     
     // Si el coche está saltando, actualizar física vertical
     if (isJumping) {
-        const gravity = JUMP_PHYSICS.GRAVITY;
+        // Obtener gravedad según el tipo de vehículo
+        const vehicleType = selectedCar?.vehicleType || 'monster_truck';
+        let gravity;
+        switch(vehicleType) {
+            case 'bus':
+                gravity = JUMP_PHYSICS.GRAVITY_BUS;
+                break;
+            case 'f1':
+                gravity = JUMP_PHYSICS.GRAVITY_F1;
+                break;
+            case 'monster_truck':
+            default:
+                gravity = JUMP_PHYSICS.GRAVITY;
+                break;
+        }
         
         // Aplicar gravedad a la velocidad vertical
         carVy += gravity;
