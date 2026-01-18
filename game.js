@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.2.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.2.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
