@@ -79,6 +79,15 @@
         <div class="version-info" id="versionInfo">v<span id="versionNumber"></span></div>
     </div>
 
-    <script src="game.js"></script>
+    <script>
+        // Cargar script con versionado para evitar caché
+        (function() {
+            const APP_VERSION = '1.2.1';
+            const script = document.createElement('script');
+            script.src = 'game.js?v=' + APP_VERSION;
+            script.async = false;
+            document.body.appendChild(script);
+        })();
+    </script>
 </body>
 </html>
