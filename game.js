@@ -882,7 +882,122 @@ const levels = [
             { distance: 11000, y: 340, width: 80, height: 40, type: 'ufo' },
             { distance: 11500, y: 520, width: 60, height: 30, type: 'hole' }
         ]
-    }
+    },
+    // Niveles 21-100 generados automáticamente
+    ...(function() {
+        // Función determinística para generar valores pseudoaleatorios
+        function seededRandom(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+        
+        const newLevels = [];
+        const obstacleTypes = ['spikes', 'ufo', 'hole', 'obstacle', 'fire', 'tree'];
+        const ufoHeights = [320, 330, 340, 350, 360, 370, 380];
+        
+        for (let levelNum = 21; levelNum <= 100; levelNum++) {
+            // Distancia base aumenta progresivamente: 12500 + (nivel - 21) * 500
+            const baseDistance = 12500 + (levelNum - 21) * 500;
+            const goalDistance = baseDistance;
+            
+            // Número de obstáculos aumenta progresivamente: 20 + nivel/5
+            const numObstacles = Math.floor(20 + levelNum / 5);
+            
+            const obstacles = [];
+            const minSpacing = 300; // Espaciado mínimo entre obstáculos
+            let lastDistance = 400;
+            
+            for (let i = 0; i < numObstacles; i++) {
+                // Generar semilla determinística basada en nivel e índice
+                const seed = levelNum * 1000 + i * 17;
+                
+                // Espaciado variable que aumenta con el nivel (determinístico)
+                const spacing = minSpacing + seededRandom(seed) * (200 + levelNum * 10);
+                lastDistance += spacing;
+                
+                // No exceder el 95% de la distancia total
+                if (lastDistance >= goalDistance * 0.95) break;
+                
+                // Seleccionar tipo de obstáculo con variación determinística
+                let obstacleType;
+                const rand = seededRandom(seed + 1);
+                
+                if (rand < 0.25) {
+                    obstacleType = 'spikes';
+                } else if (rand < 0.45) {
+                    obstacleType = 'ufo';
+                } else if (rand < 0.65) {
+                    obstacleType = 'hole';
+                } else if (rand < 0.80) {
+                    obstacleType = 'obstacle';
+                } else if (rand < 0.90) {
+                    obstacleType = 'fire';
+                } else {
+                    obstacleType = 'tree';
+                }
+                
+                // Configuración según tipo
+                if (obstacleType === 'ufo') {
+                    const ufoIndex = Math.floor(seededRandom(seed + 2) * ufoHeights.length);
+                    const ufoY = ufoHeights[ufoIndex];
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: ufoY,
+                        width: 80,
+                        height: 40,
+                        type: 'ufo'
+                    });
+                } else if (obstacleType === 'hole') {
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: 520,
+                        width: 60,
+                        height: 30,
+                        type: 'hole'
+                    });
+                } else if (obstacleType === 'fire') {
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: 520,
+                        width: 50,
+                        height: 50,
+                        type: 'fire'
+                    });
+                } else if (obstacleType === 'tree') {
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: 520,
+                        width: 40,
+                        height: 60,
+                        type: 'tree'
+                    });
+                } else if (obstacleType === 'spikes') {
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: 520,
+                        width: 40,
+                        height: 20,
+                        type: 'spikes'
+                    });
+                } else {
+                    obstacles.push({
+                        distance: lastDistance,
+                        y: 520,
+                        width: 40,
+                        height: 20,
+                        type: 'obstacle'
+                    });
+                }
+            }
+            
+            newLevels.push({
+                goalDistance: goalDistance,
+                obstacles: obstacles
+            });
+        }
+        
+        return newLevels;
+    })()
 ];
 
 let currentLevelData = levels[0];

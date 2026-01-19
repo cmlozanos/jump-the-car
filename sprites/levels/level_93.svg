@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
+  <!-- Fondo -->
+  <rect width="200" height="150" fill="#A8E6CF" rx="10"/>
+  
+  <!-- Carretera -->
+  <rect x="50" y="100" width="100" height="30" fill="#555" rx="5"/>
+  <line x1="50" y1="115" x2="150" y2="115" stroke="#FFD700" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Obstáculos representativos -->
+  <polygon points="60,100 65,115 55,115" fill="#dc143c"/>
+  <ellipse cx="85" cy="70" rx="12" ry="5" fill="#9370DB"/>
+    <ellipse cx="85" cy="70" rx="9" ry="4" fill="#BA55D3"/>
+  <ellipse cx="110" cy="115" rx="8" ry="5" fill="#2d3436"/>
+  <rect x="129" y="100" width="12" height="15" fill="#8b0000" rx="2"/>
+  <polygon points="160,100 165,115 155,115" fill="#dc143c"/>
+  
+  <!-- Meta -->
+  <rect x="140" y="80" width="20" height="50" fill="#FFD700" rx="3"/>
+  <circle cx="150" cy="90" r="5" fill="#fff"/>
+  
+  
+  <!-- Número de nivel -->
+  <text x="100" y="50" font-size="40" font-weight="bold" fill="#2d3436" text-anchor="middle" >93</text>
+</svg>
