@@ -2,7 +2,7 @@
   "name": "Jump the Car",
   "short_name": "Jump the Car",
   "description": "Un juego educativo y divertido para niños donde deben ayudar a un coche a saltar sobre obstáculos y llegar a la meta",
-  "start_url": "/",
+  "start_url": "/jump-the-car",
   "display": "standalone",
   "background_color": "#87CEEB",
   "theme_color": "#FFD700",
