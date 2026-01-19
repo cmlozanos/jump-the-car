@@ -29,10 +29,10 @@
                 <canvas id="gameCanvas" width="1200" height="600"></canvas>
                 <!-- Botones HTML por encima del canvas y mensajes -->
                 <button id="changeCarButton" class="canvas-button change-car-button-html" style="display: none;">
-                    <img src="sprites/environment/car_icon.svg" alt="Cambiar coche" class="button-sprite">
+                    <img src="" alt="Cambiar coche" class="button-sprite">
                 </button>
                 <button id="configButton" class="canvas-button config-button-html" style="display: none;">
-                    <img src="sprites/environment/settings.svg" alt="Configuración" class="button-sprite">
+                    <img src="" alt="Configuración" class="button-sprite">
                 </button>
             </div>
         </div>
@@ -51,25 +51,25 @@
         <!-- Panel de configuración -->
         <div class="config-overlay" id="configOverlay" style="display: none;">
             <div class="config-content">
-                <h2><img src="sprites/environment/settings.svg" alt="Configuración" class="config-title-icon"> Configuración</h2>
+                <h2><img src="" alt="Configuración" class="config-title-icon"> Configuración</h2>
                 <div class="config-section">
                     <h3>Velocidad del Vehículo</h3>
                     <div class="speed-controls">
                         <button id="accelerateButton" class="config-button accelerate-btn">
-                            <img src="sprites/environment/arrow_up.svg" alt="Acelerar" class="button-icon-img">
+                            <img src="" alt="Acelerar" class="button-icon-img">
                             <span class="button-label">Acelerar</span>
                         </button>
                         <div class="speed-display">
                             <span id="currentSpeedDisplay">15 km/h</span>
                         </div>
                         <button id="decelerateButton" class="config-button decelerate-btn">
-                            <img src="sprites/environment/arrow_down.svg" alt="Desacelerar" class="button-icon-img">
+                            <img src="" alt="Desacelerar" class="button-icon-img">
                             <span class="button-label">Desacelerar</span>
                         </button>
                     </div>
                 </div>
                 <button id="closeConfigButton" class="config-close-button">
-                    <img src="sprites/environment/close.svg" alt="Cerrar" class="close-icon-img">
+                    <img src="" alt="Cerrar" class="close-icon-img">
                     Cerrar
                 </button>
             </div>
@@ -82,7 +82,7 @@
     <script>
         // Cargar script con versionado para evitar caché
         (function() {
-            const APP_VERSION = '1.2.1';
+            const APP_VERSION = '1.2.2';
             const script = document.createElement('script');
             script.src = 'game.js?v=' + APP_VERSION;
             script.async = false;

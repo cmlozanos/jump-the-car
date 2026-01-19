@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.2.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.2.2'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
@@ -144,41 +144,43 @@ function loadImage(src) {
 // Cargar todos los sprites
 async function loadSprites() {
     try {
-        // Cargar sprites de coches (12 coches disponibles)
-        for (let i = 1; i <= 12; i++) {
-            sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg`);
+        const versionParam = `?v=${APP_VERSION}`;
+        
+        // Cargar sprites de coches (13 coches disponibles)
+        for (let i = 1; i <= 13; i++) {
+            sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg${versionParam}`);
         }
         
         // Cargar sprite de sombra
-        sprites.carShadow = await loadImage('sprites/cars/car_shadow.svg');
+        sprites.carShadow = await loadImage(`sprites/cars/car_shadow.svg${versionParam}`);
         
         // Cargar sprites de obstáculos
-        sprites.obstacle = await loadImage('sprites/environment/obstacle.svg');
-        sprites.spikes = await loadImage('sprites/environment/spikes.svg');
-        sprites.tree = await loadImage('sprites/environment/tree.svg');
-        sprites.hole = await loadImage('sprites/environment/hole.svg');
-        sprites.ufo = await loadImage('sprites/environment/ufo.svg');
-        sprites.fire = await loadImage('sprites/environment/fire.svg');
+        sprites.obstacle = await loadImage(`sprites/environment/obstacle.svg${versionParam}`);
+        sprites.spikes = await loadImage(`sprites/environment/spikes.svg${versionParam}`);
+        sprites.tree = await loadImage(`sprites/environment/tree.svg${versionParam}`);
+        sprites.hole = await loadImage(`sprites/environment/hole.svg${versionParam}`);
+        sprites.ufo = await loadImage(`sprites/environment/ufo.svg${versionParam}`);
+        sprites.fire = await loadImage(`sprites/environment/fire.svg${versionParam}`);
         
         // Cargar sprites de ambiente
-        sprites.goal = await loadImage('sprites/environment/goal.svg');
-        sprites.cloud = await loadImage('sprites/environment/cloud.svg');
-        sprites.sun = await loadImage('sprites/environment/sun.svg');
+        sprites.goal = await loadImage(`sprites/environment/goal.svg${versionParam}`);
+        sprites.cloud = await loadImage(`sprites/environment/cloud.svg${versionParam}`);
+        sprites.sun = await loadImage(`sprites/environment/sun.svg${versionParam}`);
         
         // Cargar sprites de luna (diferentes fases)
-        sprites.moonFull = await loadImage('sprites/environment/moon_full.svg');
-        sprites.moonCrescent = await loadImage('sprites/environment/moon_crescent.svg');
-        sprites.moonWaning = await loadImage('sprites/environment/moon_waning.svg');
-        sprites.moonHalf = await loadImage('sprites/environment/moon_half.svg');
+        sprites.moonFull = await loadImage(`sprites/environment/moon_full.svg${versionParam}`);
+        sprites.moonCrescent = await loadImage(`sprites/environment/moon_crescent.svg${versionParam}`);
+        sprites.moonWaning = await loadImage(`sprites/environment/moon_waning.svg${versionParam}`);
+        sprites.moonHalf = await loadImage(`sprites/environment/moon_half.svg${versionParam}`);
         
         // Cargar sprite de configuración
-        sprites.settings = await loadImage('sprites/environment/settings.svg');
+        sprites.settings = await loadImage(`sprites/environment/settings.svg${versionParam}`);
         
         // Cargar sprites de UI
-        sprites.arrowUp = await loadImage('sprites/environment/arrow_up.svg');
-        sprites.arrowDown = await loadImage('sprites/environment/arrow_down.svg');
-        sprites.carIcon = await loadImage('sprites/environment/car_icon.svg');
-        sprites.close = await loadImage('sprites/environment/close.svg');
+        sprites.arrowUp = await loadImage(`sprites/environment/arrow_up.svg${versionParam}`);
+        sprites.arrowDown = await loadImage(`sprites/environment/arrow_down.svg${versionParam}`);
+        sprites.carIcon = await loadImage(`sprites/environment/car_icon.svg${versionParam}`);
+        sprites.close = await loadImage(`sprites/environment/close.svg${versionParam}`);
         
         console.log('Todos los sprites cargados exitosamente');
         return true;
@@ -414,6 +416,23 @@ const cars = [
             secondary: '#003d7a',
             accent: '#00ffff',
             gradient: 'linear-gradient(135deg, #0066cc 0%, #003d7a 100%)',
+            icon: '🏎️'
+        }
+    },
+    {
+        id: 13,
+        name: 'Racing Champion 🏎️',
+        color: '#00BDB9',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Fórmula 1 Racing Car',
+        vehicleType: 'f1',
+        theme: {
+            primary: '#00BDB9',
+            secondary: '#008C8E',
+            accent: '#19DDD3',
+            gradient: 'linear-gradient(135deg, #00BDB9 0%, #008C8E 100%)',
             icon: '🏎️'
         }
     }
@@ -1394,10 +1413,52 @@ async function init() {
     const changeCarButton = document.getElementById('changeCarButton');
     const configButton = document.getElementById('configButton');
     if (changeCarButton) {
-        updateButtonSprite(changeCarButton, sprites.carIcon, 'sprites/environment/car_icon.svg');
+        updateButtonSprite(changeCarButton, sprites.carIcon, `sprites/environment/car_icon.svg?v=${APP_VERSION}`);
     }
     if (configButton) {
-        updateButtonSprite(configButton, sprites.settings, 'sprites/environment/settings.svg');
+        updateButtonSprite(configButton, sprites.settings, `sprites/environment/settings.svg?v=${APP_VERSION}`);
+    }
+    
+    // Actualizar sprites en el HTML directamente
+    const versionParam = `?v=${APP_VERSION}`;
+    const configTitleIcon = document.querySelector('.config-title-icon');
+    if (configTitleIcon && sprites.settings) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 24;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(sprites.settings, 0, 0, 24, 24);
+        configTitleIcon.src = canvas.toDataURL();
+    }
+    
+    const accelerateBtnImg = document.querySelector('#accelerateButton .button-icon-img');
+    if (accelerateBtnImg && sprites.arrowUp) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 24;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(sprites.arrowUp, 0, 0, 24, 24);
+        accelerateBtnImg.src = canvas.toDataURL();
+    }
+    
+    const decelerateBtnImg = document.querySelector('#decelerateButton .button-icon-img');
+    if (decelerateBtnImg && sprites.arrowDown) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 24;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(sprites.arrowDown, 0, 0, 24, 24);
+        decelerateBtnImg.src = canvas.toDataURL();
+    }
+    
+    const closeBtnImg = document.querySelector('#closeConfigButton .close-icon-img');
+    if (closeBtnImg && sprites.close) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 24;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(sprites.close, 0, 0, 24, 24);
+        closeBtnImg.src = canvas.toDataURL();
     }
     
     // Mostrar versión de la aplicación
@@ -1432,7 +1493,7 @@ function setupCarSelection() {
         
         // Crear imagen del coche usando el sprite SVG
         const carImg = document.createElement('img');
-        carImg.src = `sprites/cars/car_${car.id}.svg`;
+        carImg.src = `sprites/cars/car_${car.id}.svg?v=${APP_VERSION}`;
         carImg.alt = car.name;
         carImg.style.width = '100%';
         carImg.style.height = '100%';
@@ -1756,7 +1817,7 @@ function setupCanvasButtons() {
             changeCar();
         });
         // Actualizar sprite del botón cuando esté cargado
-        updateButtonSprite(changeCarButton, sprites.carIcon, 'sprites/environment/car_icon.svg');
+        updateButtonSprite(changeCarButton, sprites.carIcon, `sprites/environment/car_icon.svg?v=${APP_VERSION}`);
     }
     
     if (configButton) {
@@ -1765,7 +1826,7 @@ function setupCanvasButtons() {
             showConfigPanel();
         });
         // Actualizar sprite del botón cuando esté cargado
-        updateButtonSprite(configButton, sprites.settings, 'sprites/environment/settings.svg');
+        updateButtonSprite(configButton, sprites.settings, `sprites/environment/settings.svg?v=${APP_VERSION}`);
     }
     
     // Actualizar posición de los botones cuando cambia el tamaño del canvas
