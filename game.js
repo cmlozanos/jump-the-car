@@ -248,8 +248,9 @@ async function loadSprites() {
         sprites.carIcon = await loadImage(`sprites/environment/car_icon.svg${versionParam}`);
         sprites.close = await loadImage(`sprites/environment/close.svg${versionParam}`);
         
-        // Cargar sprites de niveles
-        for (let i = 1; i <= levels.length; i++) {
+        // Cargar sprites de niveles (solo los primeros 20 por ahora)
+        const MAX_VISIBLE_LEVELS = 20;
+        for (let i = 1; i <= Math.min(MAX_VISIBLE_LEVELS, levels.length); i++) {
             sprites.levels[i] = await loadImage(`sprites/levels/level_${i}.svg${versionParam}`);
         }
         
@@ -1858,9 +1859,13 @@ function setupLevelSelection() {
     
     levelsGrid.innerHTML = '';
     
-    console.log(`Creando ${levels.length} niveles en el panel de selección`);
+    // Mostrar solo los primeros 20 niveles por ahora
+    const MAX_VISIBLE_LEVELS = 20;
+    const visibleLevels = levels.slice(0, MAX_VISIBLE_LEVELS);
     
-    levels.forEach((level, index) => {
+    console.log(`Creando ${visibleLevels.length} niveles visibles en el panel de selección (de ${levels.length} totales)`);
+    
+    visibleLevels.forEach((level, index) => {
         const levelNumber = index + 1;
         const isUnlocked = isLevelUnlocked(levelNumber);
         const isCurrentLevel = levelNumber === currentLevel;
