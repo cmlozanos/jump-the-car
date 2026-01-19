@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.2.2'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.2.14'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
@@ -146,8 +146,8 @@ async function loadSprites() {
     try {
         const versionParam = `?v=${APP_VERSION}`;
         
-        // Cargar sprites de coches (13 coches disponibles)
-        for (let i = 1; i <= 13; i++) {
+        // Cargar sprites de coches (14 coches disponibles)
+        for (let i = 1; i <= 14; i++) {
             sprites.cars[i] = await loadImage(`sprites/cars/car_${i}.svg${versionParam}`);
         }
         
@@ -213,8 +213,9 @@ function getRoadSpeedForLevel(level) {
     return (SPEED.ROAD_SCROLL + (level - 1) * 0.1) * speedMultiplier;
 }
 
-// Definición de coches disponibles (Monster Trucks Hot Wheels)
+// Definición de coches disponibles - Ordenados por tipo: Monster Trucks, Buses, F1
 const cars = [
+    // ========== MONSTER TRUCKS (IDs 1-6) ==========
     {
         id: 1,
         name: 'Fire Blazer 🔥',
@@ -317,6 +318,7 @@ const cars = [
             icon: '⚫'
         }
     },
+    // ========== BUSES (IDs 7-10, 14) ==========
     {
         id: 7,
         name: 'Orange Crush 🧡',
@@ -385,6 +387,24 @@ const cars = [
             icon: '💗'
         }
     },
+    {
+        id: 14,
+        name: 'City Express 🚌',
+        color: '#4169E1',
+        baseAngle: CAR_BASE_STATS.ANGLE,
+        baseSpeed: CAR_BASE_STATS.SPEED,
+        baseAcceleration: CAR_BASE_STATS.ACCELERATION,
+        description: 'Bus Azul',
+        vehicleType: 'bus',
+        theme: {
+            primary: '#4169E1',
+            secondary: '#1E90FF',
+            accent: '#87CEEB',
+            gradient: 'linear-gradient(135deg, #4169E1 0%, #1E90FF 100%)',
+            icon: '🚌'
+        }
+    },
+    // ========== FÓRMULA 1 (IDs 11-13) ==========
     {
         id: 11,
         name: 'Red Lightning 🏎️',

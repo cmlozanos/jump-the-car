@@ -3,10 +3,10 @@
      width="869" height="371" viewBox="0 0 869 371" xml:space="preserve">
 <g transform="translate(434.5, 185.5) scale(-1, 1) translate(-434.5, -185.5)">
   <!-- Cuerpo principal del autobús -->
-  <rect x="50" y="80" width="770" height="220" rx="15" fill="#ff8c00" stroke="#ff4500" stroke-width="3"/>
+  <rect x="50" y="80" width="770" height="220" rx="15" fill="#4169E1" stroke="#1e3a8a" stroke-width="3"/>
   
   <!-- Parte superior del autobús -->
-  <rect x="50" y="80" width="770" height="60" rx="15" fill="#ff4500"/>
+  <rect x="50" y="80" width="770" height="60" rx="15" fill="#1e3a8a"/>
   
   <!-- Ventanas frontales -->
   <rect x="100" y="90" width="120" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
@@ -19,18 +19,18 @@
   <rect x="740" y="90" width="60" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
   
   <!-- Marco de ventanas -->
-  <line x1="100" y1="90" x2="100" y2="135" stroke="#ff4500" stroke-width="2"/>
-  <line x1="220" y1="90" x2="220" y2="135" stroke="#ff4500" stroke-width="2"/>
-  <line x1="360" y1="90" x2="360" y2="135" stroke="#ff4500" stroke-width="2"/>
-  <line x1="480" y1="90" x2="480" y2="135" stroke="#ff4500" stroke-width="2"/>
-  <line x1="600" y1="90" x2="600" y2="135" stroke="#ff4500" stroke-width="2"/>
-  <line x1="720" y1="90" x2="720" y2="135" stroke="#ff4500" stroke-width="2"/>
+  <line x1="100" y1="90" x2="100" y2="135" stroke="#1e3a8a" stroke-width="2"/>
+  <line x1="220" y1="90" x2="220" y2="135" stroke="#1e3a8a" stroke-width="2"/>
+  <line x1="360" y1="90" x2="360" y2="135" stroke="#1e3a8a" stroke-width="2"/>
+  <line x1="480" y1="90" x2="480" y2="135" stroke="#1e3a8a" stroke-width="2"/>
+  <line x1="600" y1="90" x2="600" y2="135" stroke="#1e3a8a" stroke-width="2"/>
+  <line x1="720" y1="90" x2="720" y2="135" stroke="#1e3a8a" stroke-width="2"/>
   
   <!-- Línea decorativa horizontal -->
   <rect x="50" y="150" width="770" height="8" fill="#FFD700"/>
   
   <!-- Puerta del autobús -->
-  <rect x="650" y="160" width="80" height="130" rx="5" fill="#ff4500" stroke="#000" stroke-width="2"/>
+  <rect x="650" y="160" width="80" height="130" rx="5" fill="#1e3a8a" stroke="#000" stroke-width="2"/>
   <line x1="690" y1="160" x2="690" y2="290" stroke="#000" stroke-width="2"/>
   <circle cx="720" cy="225" r="5" fill="#FFD700"/>
   

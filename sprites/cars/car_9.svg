@@ -1,15 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- Monster Truck Turquesa -->
-  <rect x="10" y="30" width="80" height="50" rx="8" fill="#40e0d0" stroke="#2d3436" stroke-width="2"/>
-  <!-- Ventanas -->
-  <rect x="20" y="35" width="18" height="15" rx="3" fill="#87ceeb"/>
-  <rect x="62" y="35" width="18" height="15" rx="3" fill="#87ceeb"/>
-  <!-- Ruedas grandes -->
-  <circle cx="25" cy="85" r="12" fill="#2d3436"/>
-  <circle cx="75" cy="85" r="12" fill="#2d3436"/>
-  <circle cx="25" cy="85" r="8" fill="#555"/>
-  <circle cx="75" cy="85" r="8" fill="#555"/>
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="869" height="371" viewBox="0 0 869 371" xml:space="preserve">
+<g transform="translate(434.5, 185.5) scale(-1, 1) translate(-434.5, -185.5)">
+  <!-- Cuerpo principal del autobús -->
+  <rect x="50" y="80" width="770" height="220" rx="15" fill="#40e0d0" stroke="#00ced1" stroke-width="3"/>
+  
+  <!-- Parte superior del autobús -->
+  <rect x="50" y="80" width="770" height="60" rx="15" fill="#00ced1"/>
+  
+  <!-- Ventanas frontales -->
+  <rect x="100" y="90" width="120" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  <rect x="240" y="90" width="120" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  
+  <!-- Ventanas laterales -->
+  <rect x="380" y="90" width="100" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  <rect x="500" y="90" width="100" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  <rect x="620" y="90" width="100" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  <rect x="740" y="90" width="60" height="45" rx="5" fill="#87CEEB" opacity="0.8"/>
+  
+  <!-- Marco de ventanas -->
+  <line x1="100" y1="90" x2="100" y2="135" stroke="#00ced1" stroke-width="2"/>
+  <line x1="220" y1="90" x2="220" y2="135" stroke="#00ced1" stroke-width="2"/>
+  <line x1="360" y1="90" x2="360" y2="135" stroke="#00ced1" stroke-width="2"/>
+  <line x1="480" y1="90" x2="480" y2="135" stroke="#00ced1" stroke-width="2"/>
+  <line x1="600" y1="90" x2="600" y2="135" stroke="#00ced1" stroke-width="2"/>
+  <line x1="720" y1="90" x2="720" y2="135" stroke="#00ced1" stroke-width="2"/>
+  
+  <!-- Línea decorativa horizontal -->
+  <rect x="50" y="150" width="770" height="8" fill="#FFD700"/>
+  
+  <!-- Puerta del autobús -->
+  <rect x="650" y="160" width="80" height="130" rx="5" fill="#00ced1" stroke="#000" stroke-width="2"/>
+  <line x1="690" y1="160" x2="690" y2="290" stroke="#000" stroke-width="2"/>
+  <circle cx="720" cy="225" r="5" fill="#FFD700"/>
+  
+  <!-- Ruedas delanteras -->
+  <circle cx="200" cy="300" r="35" fill="#2d3436"/>
+  <circle cx="200" cy="300" r="25" fill="#555"/>
+  <circle cx="200" cy="300" r="15" fill="#2d3436"/>
+  <circle cx="200" cy="300" r="8" fill="#87CEEB"/>
+  
+  <!-- Ruedas traseras -->
+  <circle cx="650" cy="300" r="35" fill="#2d3436"/>
+  <circle cx="650" cy="300" r="25" fill="#555"/>
+  <circle cx="650" cy="300" r="15" fill="#2d3436"/>
+  <circle cx="650" cy="300" r="8" fill="#87CEEB"/>
+  
+  <!-- Parachoques delantero -->
+  <rect x="50" y="270" width="100" height="20" rx="5" fill="#FFD700"/>
+  
+  <!-- Parachoques trasero -->
+  <rect x="720" y="270" width="100" height="20" rx="5" fill="#FFD700"/>
+  
+  <!-- Faros delanteros -->
+  <circle cx="100" cy="200" r="12" fill="#FFD700"/>
+  <circle cx="100" cy="200" r="8" fill="#FFFFFF"/>
+  
+  <!-- Luces traseras -->
+  <circle cx="820" cy="200" r="10" fill="#FF0000"/>
+  <circle cx="820" cy="220" r="10" fill="#FFA500"/>
+  
   <!-- Detalles decorativos -->
-  <rect x="15" y="45" width="70" height="8" rx="2" fill="#00ced1"/>
-  <circle cx="50" cy="49" r="3" fill="#ffd700"/>
+  <rect x="120" y="170" width="200" height="5" rx="2" fill="#FFD700"/>
+  <rect x="400" y="170" width="150" height="5" rx="2" fill="#FFD700"/>
+  
+  <!-- Antena -->
+  <line x1="435" y1="80" x2="435" y2="50" stroke="#2d3436" stroke-width="3"/>
+  <circle cx="435" cy="50" r="4" fill="#FFD700"/>
+</g>
 </svg>
