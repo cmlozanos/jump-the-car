@@ -24,6 +24,12 @@
                 <div class="cars-grid" id="carsGrid"></div>
             </div>
 
+            <!-- Panel de selección de niveles -->
+            <div class="level-selection-panel" id="levelSelectionPanel" style="display: none;">
+                <h2>Selecciona un Nivel</h2>
+                <div class="levels-grid" id="levelsGrid"></div>
+            </div>
+
             <!-- Panel de juego -->
             <div class="game-panel" id="gamePanel" style="display: none;">
                 <canvas id="gameCanvas" width="1200" height="600"></canvas>
@@ -33,6 +39,9 @@
                 </button>
                 <button id="configButton" class="canvas-button config-button-html" style="display: none;">
                     <img src="" alt="Configuración" class="button-sprite">
+                </button>
+                <button id="changeLevelButton" class="canvas-button change-level-button-html" style="display: none;">
+                    <img src="" alt="Cambiar nivel" class="button-sprite">
                 </button>
             </div>
         </div>
@@ -82,7 +91,7 @@
     <script>
         // Cargar script con versionado para evitar caché
         (function() {
-            const APP_VERSION = '1.2.14';
+            const APP_VERSION = '1.4.0';
             const script = document.createElement('script');
             script.src = 'game.js?v=' + APP_VERSION;
             script.async = false;

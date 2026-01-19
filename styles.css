@@ -105,17 +105,77 @@ body::before {
     font-weight: 700;
 }
 
-.cars-grid {
+/* Panel de selección de niveles */
+.level-selection-panel {
+    text-align: center;
+}
+
+.level-selection-panel h2 {
+    color: #4ecdc4;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+.levels-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 20px;
     margin-top: 20px;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Los niveles usan las mismas clases que los coches: .car-option, .car-sprite, .car-name, .car-stats */
+.car-option.locked {
+    background: linear-gradient(135deg, #666666 0%, #555555 100%);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.car-option.locked:hover {
+    transform: none;
+    border-width: 4px;
+    border-color: #2d3436;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.car-option.locked .car-name {
+    color: #999;
+}
+
+.car-option.locked .car-stats {
+    color: #999;
+}
+
+/* Optimización para tablets en modo horizontal */
+@media screen and (min-width: 768px) and (orientation: landscape) {
+    .levels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        max-width: 100%;
+    }
+}
+
+.cars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Optimización para tablets en modo horizontal */
 @media screen and (min-width: 768px) and (orientation: landscape) {
     .cars-grid {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 15px;
+        max-width: 100%;
+    }
+    
+    .levels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 15px;
         max-width: 100%;
     }
@@ -236,15 +296,15 @@ body::before {
 /* Ajustes para pantallas pequeñas */
 @media screen and (max-width: 600px) {
     .canvas-button {
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
         border-width: 2px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
     
     .button-sprite {
-        width: 30px !important;
-        height: 30px !important;
+        width: 28px !important;
+        height: 28px !important;
     }
 }
 
@@ -262,6 +322,10 @@ body::before {
 
 .config-button-html {
     background: rgba(108, 117, 125, 0.9);
+}
+
+.change-level-button-html {
+    background: rgba(78, 205, 196, 0.9);
 }
 
 .button-sprite {

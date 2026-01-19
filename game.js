@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.2.14'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.4.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 
 // ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
@@ -83,6 +83,71 @@ const GOAL_VISUAL = {
 // FIN DE CONSTANTES - NO MODIFICAR CÓDIGO ABAJO SIN ACTUALIZAR CONSTANTES
 // ============================================================================
 
+// ============================================================================
+// GESTIÓN DE COOKIES PARA NIVELES DESBLOQUEADOS
+// ============================================================================
+
+// Función para establecer una cookie sin fecha de expiración (persistente)
+function setCookie(name, value) {
+    // Cookie sin fecha de expiración = dura para siempre hasta que se borre manualmente
+    document.cookie = `${name}=${value}; path=/; SameSite=Lax`;
+}
+
+// Función para obtener el valor de una cookie
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+// Obtener niveles desbloqueados desde cookie
+function getUnlockedLevels() {
+    const unlockedStr = getCookie('unlockedLevels');
+    if (!unlockedStr) {
+        // El nivel 1 siempre está desbloqueado por defecto
+        return [1];
+    }
+    try {
+        const unlocked = JSON.parse(unlockedStr);
+        // Asegurar que el nivel 1 siempre esté desbloqueado
+        if (!unlocked.includes(1)) {
+            unlocked.push(1);
+        }
+        return unlocked.sort((a, b) => a - b);
+    } catch (e) {
+        console.error('Error al parsear niveles desbloqueados:', e);
+        return [1];
+    }
+}
+
+// Guardar niveles desbloqueados en cookie
+function saveUnlockedLevels(unlockedLevels) {
+    const uniqueLevels = [...new Set(unlockedLevels)].sort((a, b) => a - b);
+    setCookie('unlockedLevels', JSON.stringify(uniqueLevels));
+}
+
+// Desbloquear un nivel específico
+function unlockLevel(levelNumber) {
+    const unlocked = getUnlockedLevels();
+    if (!unlocked.includes(levelNumber)) {
+        unlocked.push(levelNumber);
+        saveUnlockedLevels(unlocked);
+        return true;
+    }
+    return false;
+}
+
+// Verificar si un nivel está desbloqueado
+function isLevelUnlocked(levelNumber) {
+    const unlocked = getUnlockedLevels();
+    return unlocked.includes(levelNumber);
+}
+
 // Configuración del juego
 let canvas = null;
 let ctx = null;
@@ -110,6 +175,7 @@ let gameLoopRunning = false; // Control para evitar múltiples bucles de juego
 // Sprites cargados
 const sprites = {
     cars: {},
+    levels: {},
     carShadow: null,
     obstacle: null,
     spikes: null,
@@ -181,6 +247,11 @@ async function loadSprites() {
         sprites.arrowDown = await loadImage(`sprites/environment/arrow_down.svg${versionParam}`);
         sprites.carIcon = await loadImage(`sprites/environment/car_icon.svg${versionParam}`);
         sprites.close = await loadImage(`sprites/environment/close.svg${versionParam}`);
+        
+        // Cargar sprites de niveles
+        for (let i = 1; i <= levels.length; i++) {
+            sprites.levels[i] = await loadImage(`sprites/levels/level_${i}.svg${versionParam}`);
+        }
         
         console.log('Todos los sprites cargados exitosamente');
         return true;
@@ -1425,18 +1496,33 @@ async function init() {
     await loadSprites();
     
     setupCarSelection();
+    setupLevelSelection();
     setupControls();
     setupEventListeners();
     setupCanvasButtons();
     
+    // Asegurar que el nivel 1 esté desbloqueado al iniciar
+    if (!isLevelUnlocked(1)) {
+        unlockLevel(1);
+    }
+    
+    // Mostrar primero el selector de niveles (ocultar selector de coches)
+    document.getElementById('carSelectionPanel').style.display = 'none';
+    document.getElementById('gamePanel').style.display = 'none';
+    document.getElementById('levelSelectionPanel').style.display = 'block';
+    
     // Actualizar sprites de los botones después de cargar
     const changeCarButton = document.getElementById('changeCarButton');
     const configButton = document.getElementById('configButton');
+    const changeLevelButton = document.getElementById('changeLevelButton');
     if (changeCarButton) {
         updateButtonSprite(changeCarButton, sprites.carIcon, `sprites/environment/car_icon.svg?v=${APP_VERSION}`);
     }
     if (configButton) {
         updateButtonSprite(configButton, sprites.settings, `sprites/environment/settings.svg?v=${APP_VERSION}`);
+    }
+    if (changeLevelButton && sprites.goal) {
+        updateButtonSprite(changeLevelButton, sprites.goal, `sprites/environment/goal.svg?v=${APP_VERSION}`);
     }
     
     // Actualizar sprites en el HTML directamente
@@ -1573,6 +1659,25 @@ function selectCar(car, element = null) {
     // Aplicar tema visual del coche seleccionado
     applyCarTheme(car);
     
+    // Reiniciar el juego desde el nivel seleccionado
+    // Resetear flags de pausa
+    gamePaused = false;
+    previousGameState = null;
+    
+    // Asegurar que el multiplicador esté dentro de los límites
+    if (speedMultiplier < SPEED.MIN_MULTIPLIER) {
+        speedMultiplier = SPEED.MIN_MULTIPLIER;
+    }
+    if (speedMultiplier > SPEED.MAX_MULTIPLIER) {
+        speedMultiplier = SPEED.MAX_MULTIPLIER;
+    }
+    
+    // Actualizar velocidad según el nivel actual
+    roadSpeed = getRoadSpeedForLevel(currentLevel);
+    attempts = 0;
+    currentDistance = 0;
+    roadScrollX = 0;
+    
     // Mostrar panel de juego
     setTimeout(() => {
         document.getElementById('carSelectionPanel').style.display = 'none';
@@ -1580,8 +1685,10 @@ function selectCar(car, element = null) {
         // Mostrar botones HTML del canvas
         const changeCarButton = document.getElementById('changeCarButton');
         const configButton = document.getElementById('configButton');
+        const changeLevelButton = document.getElementById('changeLevelButton');
         if (changeCarButton) changeCarButton.style.display = 'flex';
         if (configButton) configButton.style.display = 'flex';
+        if (changeLevelButton) changeLevelButton.style.display = 'flex';
         // Actualizar posición de los botones
         setTimeout(() => updateCanvasButtonsPosition(), 100);
         gameState = 'playing';
@@ -1627,6 +1734,226 @@ function resetDefaultTheme() {
         header.style.webkitTextFillColor = 'unset';
         header.style.backgroundClip = 'unset';
     }
+}
+
+// Configurar panel de selección de niveles (usando exactamente las mismas clases que los coches)
+function setupLevelSelection() {
+    const levelsGrid = document.getElementById('levelsGrid');
+    if (!levelsGrid) return;
+    
+    levelsGrid.innerHTML = '';
+    
+    console.log(`Creando ${levels.length} niveles en el panel de selección`);
+    
+    levels.forEach((level, index) => {
+        const levelNumber = index + 1;
+        const isUnlocked = isLevelUnlocked(levelNumber);
+        const isCurrentLevel = levelNumber === currentLevel;
+        
+        console.log(`Creando nivel ${levelNumber}: ${isUnlocked ? 'desbloqueado' : 'bloqueado'}`);
+        const levelOption = document.createElement('div');
+        levelOption.className = 'car-option'; // Usar la misma clase que los coches
+        
+        if (isCurrentLevel) {
+            levelOption.classList.add('selected'); // Usar 'selected' igual que los coches
+        }
+        
+        if (!isUnlocked) {
+            levelOption.classList.add('locked');
+            levelOption.style.cursor = 'not-allowed';
+            levelOption.style.opacity = '0.6';
+            levelOption.style.background = 'linear-gradient(135deg, #666666 0%, #555555 100%)';
+        }
+        
+        // Crear elemento de imagen para el sprite del nivel (igual que los coches)
+        const levelSpriteDiv = document.createElement('div');
+        levelSpriteDiv.className = 'car-sprite'; // Usar la misma clase que los coches
+        
+        // Crear imagen del nivel usando el sprite SVG cargado o cargarlo directamente
+        const levelImg = document.createElement('img');
+        
+        // Intentar usar el sprite cargado en memoria primero
+        if (sprites.levels[levelNumber]) {
+            levelImg.src = sprites.levels[levelNumber].src;
+        } else {
+            // Fallback: cargar directamente desde la URL
+            levelImg.src = `sprites/levels/level_${levelNumber}.svg?v=${APP_VERSION}`;
+        }
+        
+        levelImg.alt = `Nivel ${levelNumber}`;
+        levelImg.style.width = '100%';
+        levelImg.style.height = '100%';
+        levelImg.style.objectFit = 'contain';
+        levelImg.style.display = 'block';
+        
+        // Fallback: si la imagen no carga, mostrar número
+        levelImg.onerror = function() {
+            console.error(`Error cargando sprite para nivel ${levelNumber}: ${levelImg.src}`);
+            this.style.display = 'none';
+            levelSpriteDiv.style.background = isUnlocked ? '#f0f0f0' : '#666';
+            levelSpriteDiv.style.border = '3px solid #2d3436';
+            // Mostrar número del nivel como fallback
+            const fallbackText = document.createElement('div');
+            fallbackText.textContent = levelNumber;
+            fallbackText.style.fontSize = '3em';
+            fallbackText.style.color = isUnlocked ? '#2d3436' : '#999';
+            fallbackText.style.fontWeight = 'bold';
+            fallbackText.style.display = 'flex';
+            fallbackText.style.alignItems = 'center';
+            fallbackText.style.justifyContent = 'center';
+            fallbackText.style.height = '100%';
+            levelSpriteDiv.appendChild(fallbackText);
+        };
+        
+        levelImg.onload = function() {
+            console.log(`Sprite cargado exitosamente para nivel ${levelNumber}`);
+        };
+        
+        levelSpriteDiv.appendChild(levelImg);
+        
+        // Estructura exactamente igual que los coches
+        const levelName = isUnlocked ? `Nivel ${levelNumber}` : `Nivel ${levelNumber} 🔒`;
+        const levelDescription = isUnlocked ? `${level.goalDistance}m • ${level.obstacles.length} obstáculos` : 'Bloqueado';
+        
+        levelOption.innerHTML = `
+            <div class="car-name">${levelName}</div>
+            <div class="car-stats">${levelDescription}</div>
+        `;
+        levelOption.insertBefore(levelSpriteDiv, levelOption.firstChild);
+        
+        // Agregar evento click solo si está desbloqueado
+        if (isUnlocked) {
+            levelOption.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectLevel(levelNumber);
+            });
+        }
+        
+        levelsGrid.appendChild(levelOption);
+    });
+    
+    console.log(`Total de niveles agregados al grid: ${levelsGrid.children.length}`);
+}
+
+// Seleccionar nivel
+function selectLevel(levelNumber) {
+    if (!isLevelUnlocked(levelNumber)) {
+        return; // No permitir seleccionar niveles bloqueados
+    }
+    
+    // Cambiar al nivel seleccionado
+    currentLevel = levelNumber;
+    currentLevelData = levels[levelNumber - 1];
+    
+    // Resetear flags de pausa
+    gamePaused = false;
+    previousGameState = null;
+    
+    // Asegurar que el multiplicador esté dentro de los límites
+    if (speedMultiplier < SPEED.MIN_MULTIPLIER) {
+        speedMultiplier = SPEED.MIN_MULTIPLIER;
+    }
+    if (speedMultiplier > SPEED.MAX_MULTIPLIER) {
+        speedMultiplier = SPEED.MAX_MULTIPLIER;
+    }
+    
+    // Actualizar velocidad según el nivel
+    roadSpeed = getRoadSpeedForLevel(currentLevel);
+    attempts = 0;
+    currentDistance = 0;
+    roadScrollX = 0;
+    
+    // Si ya hay un coche seleccionado, reiniciar el juego directamente desde este nivel
+    if (selectedCar) {
+        // Ocultar panel de selección de niveles
+        const levelSelectionPanel = document.getElementById('levelSelectionPanel');
+        if (levelSelectionPanel) {
+            levelSelectionPanel.style.display = 'none';
+        }
+        
+        // Mostrar panel de juego y reiniciar
+        const gamePanel = document.getElementById('gamePanel');
+        if (gamePanel) {
+            gamePanel.style.display = 'flex';
+        }
+        
+        // Mostrar botones HTML del canvas
+        const changeCarButton = document.getElementById('changeCarButton');
+        const configButton = document.getElementById('configButton');
+        const changeLevelButton = document.getElementById('changeLevelButton');
+        if (changeCarButton) changeCarButton.style.display = 'flex';
+        if (configButton) configButton.style.display = 'flex';
+        if (changeLevelButton) changeLevelButton.style.display = 'flex';
+        
+        // Actualizar posición de los botones
+        setTimeout(() => updateCanvasButtonsPosition(), 100);
+        
+        // Reiniciar el juego desde este nivel
+        gameState = 'playing';
+        resetGame();
+        draw();
+        // Iniciar sonido del motor cuando comienza el juego
+        startEngineSound();
+        // Iniciar el bucle del juego automáticamente
+        if (canvas && ctx && !gameLoopRunning) {
+            gameLoop();
+        }
+    } else {
+        // Si no hay coche seleccionado, mostrar selector de coches
+        const levelSelectionPanel = document.getElementById('levelSelectionPanel');
+        if (levelSelectionPanel) {
+            levelSelectionPanel.style.display = 'none';
+        }
+        
+        // Mostrar panel de selección de coches
+        const carSelectionPanel = document.getElementById('carSelectionPanel');
+        if (carSelectionPanel) {
+            carSelectionPanel.style.display = 'block';
+        }
+    }
+    
+    // Actualizar la visualización de niveles para marcar el nivel seleccionado
+    setupLevelSelection();
+}
+
+// Cambiar nivel (mostrar panel de selección)
+function changeLevel() {
+    // Permitir cambiar nivel en cualquier momento (incluso con mensajes visibles)
+    // Solo evitar si está explotando activamente
+    if (gameState === 'exploded' && explosionActive) {
+        return;
+    }
+    
+    // Detener sonido del motor cuando se vuelve a selección
+    stopEngineSound();
+    
+    // Ocultar paneles de mensajes y configuración si están visibles
+    document.getElementById('messageOverlay').style.display = 'none';
+    document.getElementById('configOverlay').style.display = 'none';
+    
+    // Ocultar panel de juego y mostrar panel de selección de niveles
+    document.getElementById('gamePanel').style.display = 'none';
+    // Ocultar botones HTML del canvas
+    const changeCarButton = document.getElementById('changeCarButton');
+    const configButton = document.getElementById('configButton');
+    const changeLevelButton = document.getElementById('changeLevelButton');
+    if (changeCarButton) changeCarButton.style.display = 'none';
+    if (configButton) configButton.style.display = 'none';
+    if (changeLevelButton) changeLevelButton.style.display = 'none';
+    
+    // Mostrar panel de selección de niveles
+    const levelSelectionPanel = document.getElementById('levelSelectionPanel');
+    if (levelSelectionPanel) {
+        // Actualizar la visualización antes de mostrar
+        setupLevelSelection();
+        levelSelectionPanel.style.display = 'block';
+    }
+    
+    gameState = 'selecting';
+    
+    // Resetear flags de pausa
+    gamePaused = false;
+    previousGameState = null;
 }
 
 // Mostrar panel de configuración
@@ -1799,8 +2126,10 @@ function changeCar() {
     // Ocultar botones HTML del canvas
     const changeCarButton = document.getElementById('changeCarButton');
     const configButton = document.getElementById('configButton');
+    const changeLevelButton = document.getElementById('changeLevelButton');
     if (changeCarButton) changeCarButton.style.display = 'none';
     if (configButton) configButton.style.display = 'none';
+    if (changeLevelButton) changeLevelButton.style.display = 'none';
     document.getElementById('carSelectionPanel').style.display = 'block';
     gameState = 'selecting';
     
@@ -1830,6 +2159,7 @@ function setupControls() {
 function setupCanvasButtons() {
     const changeCarButton = document.getElementById('changeCarButton');
     const configButton = document.getElementById('configButton');
+    const changeLevelButton = document.getElementById('changeLevelButton');
     
     if (changeCarButton) {
         changeCarButton.addEventListener('click', (e) => {
@@ -1847,6 +2177,15 @@ function setupCanvasButtons() {
         });
         // Actualizar sprite del botón cuando esté cargado
         updateButtonSprite(configButton, sprites.settings, `sprites/environment/settings.svg?v=${APP_VERSION}`);
+    }
+    
+    if (changeLevelButton) {
+        changeLevelButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            changeLevel();
+        });
+        // Actualizar sprite del botón cuando esté cargado (usar goal sprite)
+        updateButtonSprite(changeLevelButton, sprites.goal, `sprites/environment/goal.svg?v=${APP_VERSION}`);
     }
     
     // Actualizar posición de los botones cuando cambia el tamaño del canvas
@@ -1886,8 +2225,9 @@ function updateCanvasButtonsPosition() {
     const canvas = document.getElementById('gameCanvas');
     const changeCarButton = document.getElementById('changeCarButton');
     const configButton = document.getElementById('configButton');
+    const changeLevelButton = document.getElementById('changeLevelButton');
     
-    if (!canvas || !changeCarButton || !configButton) return;
+    if (!canvas || !changeCarButton || !configButton || !changeLevelButton) return;
     
     const rect = canvas.getBoundingClientRect();
     
@@ -1904,6 +2244,8 @@ function updateCanvasButtonsPosition() {
     changeCarButton.style.height = `${buttonSize}px`;
     configButton.style.width = `${buttonSize}px`;
     configButton.style.height = `${buttonSize}px`;
+    changeLevelButton.style.width = `${buttonSize}px`;
+    changeLevelButton.style.height = `${buttonSize}px`;
     
     // Ajustar tamaño del sprite dentro del botón
     const spriteSize = isSmallScreen ? 30 : 40;
@@ -1930,6 +2272,12 @@ function updateCanvasButtonsPosition() {
     const configY = (padding + buttonSize + buttonSpacing) * scaleY;
     configButton.style.left = `${configX}px`;
     configButton.style.top = `${configY}px`;
+    
+    // Botón de cambiar nivel (debajo del botón de configuración)
+    const levelX = (canvasWidth - padding - buttonSize) * scaleX;
+    const levelY = (padding + (buttonSize + buttonSpacing) * 2) * scaleY;
+    changeLevelButton.style.left = `${levelX}px`;
+    changeLevelButton.style.top = `${levelY}px`;
 }
 
 // Actualizar displays de controles (ya no se usa, pero se mantiene para compatibilidad)
@@ -3216,6 +3564,12 @@ function showMessage(title, text, showNextLevel = false, showRestartFromLevel1 =
     // Detener sonido del motor cuando se muestra un mensaje (victoria/derrota)
     stopEngineSound();
     
+    // Si se completó un nivel, desbloquear el siguiente nivel
+    if (showNextLevel && gameState === 'won' && currentLevel < levels.length) {
+        unlockLevel(currentLevel + 1);
+        console.log(`Nivel ${currentLevel} completado. Desbloqueando nivel ${currentLevel + 1}`);
+    }
+    
     document.getElementById('messageTitle').textContent = title;
     // Permitir saltos de línea en el texto del mensaje
     const messageTextElement = document.getElementById('messageText');
@@ -3227,7 +3581,15 @@ function showMessage(title, text, showNextLevel = false, showRestartFromLevel1 =
         }
         messageTextElement.appendChild(document.createTextNode(line));
     });
-    document.getElementById('nextLevelButton').style.display = showNextLevel ? 'inline-block' : 'none';
+    
+    // Mostrar el botón "Siguiente Nivel" solo si showNextLevel es true y hay más niveles
+    const nextLevelButton = document.getElementById('nextLevelButton');
+    const shouldShowNextLevel = showNextLevel && currentLevel < levels.length;
+    if (nextLevelButton) {
+        nextLevelButton.style.display = shouldShowNextLevel ? 'inline-block' : 'none';
+        console.log(`Botón "Siguiente Nivel": ${shouldShowNextLevel ? 'mostrado' : 'oculto'} (showNextLevel: ${showNextLevel}, currentLevel: ${currentLevel}, total niveles: ${levels.length})`);
+    }
+    
     document.getElementById('restartFromLevel1Button').style.display = showRestartFromLevel1 ? 'inline-block' : 'none';
     // Ocultar botón de reintentar cuando se muestre el botón de reiniciar desde nivel 1
     document.getElementById('retryButton').style.display = showRestartFromLevel1 ? 'none' : 'inline-block';
@@ -3322,11 +3684,19 @@ function restartFromLevel1() {
 
 // Seleccionar un coche aleatorio
 function selectRandomCar() {
-    if (cars.length === 0) return;
+    if (cars.length === 0) {
+        console.error('No hay coches disponibles para seleccionar');
+        return;
+    }
     
     // Seleccionar un índice aleatorio
     const randomIndex = Math.floor(Math.random() * cars.length);
     const randomCar = cars[randomIndex];
+    
+    if (!randomCar) {
+        console.error(`Error: No se pudo seleccionar un coche en el índice ${randomIndex}`);
+        return;
+    }
     
     // Seleccionar el coche sin mostrar el panel de selección
     selectedCar = randomCar;
@@ -3334,7 +3704,8 @@ function selectRandomCar() {
     // Actualizar la selección visual en el panel (si existe)
     document.querySelectorAll('.car-option').forEach((opt, index) => {
         opt.classList.remove('selected');
-        if (cars[index].id === randomCar.id) {
+        // Verificar que el coche existe antes de acceder a su propiedad id
+        if (cars[index] && cars[index].id === randomCar.id) {
             opt.classList.add('selected');
         }
     });
@@ -3352,9 +3723,16 @@ function selectRandomCar() {
 
 // Siguiente nivel
 function nextLevel() {
+    console.log(`Cambiando al siguiente nivel. Nivel actual: ${currentLevel}, Total niveles: ${levels.length}`);
+    
     if (currentLevel < levels.length) {
         currentLevel++;
         currentLevelData = levels[currentLevel - 1];
+        
+        console.log(`Nuevo nivel seleccionado: ${currentLevel}`);
+        
+        // Desbloquear el nivel actual en la cookie
+        unlockLevel(currentLevel);
         
         // Resetear flags de pausa
         gamePaused = false;
@@ -3378,10 +3756,50 @@ function nextLevel() {
         // Seleccionar un coche aleatorio para este nivel
         selectRandomCar();
         
+        // Asegurar que el panel de juego esté visible
+        const gamePanel = document.getElementById('gamePanel');
+        if (gamePanel) {
+            gamePanel.style.display = 'flex';
+        }
+        
+        // Ocultar el overlay de mensajes si está visible
+        const messageOverlay = document.getElementById('messageOverlay');
+        if (messageOverlay) {
+            messageOverlay.style.display = 'none';
+        }
+        
+        // Asegurar que los botones del canvas estén visibles
+        const changeCarButton = document.getElementById('changeCarButton');
+        const configButton = document.getElementById('configButton');
+        const changeLevelButton = document.getElementById('changeLevelButton');
+        if (changeCarButton) changeCarButton.style.display = 'flex';
+        if (configButton) configButton.style.display = 'flex';
+        if (changeLevelButton) changeLevelButton.style.display = 'flex';
+        
+        // Actualizar posición de los botones
+        setTimeout(() => updateCanvasButtonsPosition(), 100);
+        
+        // Reiniciar el juego
         resetGame();
+        
+        // Iniciar el juego desde el nuevo nivel
+        gameState = 'playing';
+        draw();
+        // Iniciar sonido del motor cuando comienza el juego
+        startEngineSound();
+        // Iniciar el bucle del juego automáticamente
+        if (canvas && ctx && !gameLoopRunning) {
+            gameLoop();
+        }
+        
+        console.log(`Juego reiniciado desde el nivel ${currentLevel}`);
     } else {
         // Completaste todos los niveles
         allLevelsCompleted = true;
+        // Desbloquear todos los niveles al completar el último
+        for (let i = 1; i <= levels.length; i++) {
+            unlockLevel(i);
+        }
         showMessage('¡Felicidades! 🏆', `¡Completaste todos los ${levels.length} niveles! ¡Eres un campeón!`, false, true);
     }
 }
