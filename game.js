@@ -1825,7 +1825,7 @@ function applyCarTheme(car) {
     
     // Actualizar título del header con el icono del coche
     if (header) {
-        header.textContent = `${theme.icon} Monster Trucks Hot Wheels ${theme.icon}`;
+        header.textContent = `${theme.icon} Jump the Car ${theme.icon}`;
         // Usar color sólido con sombra para mejor legibilidad
         header.style.color = theme.primary;
         header.style.textShadow = `2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px ${theme.primary}80`;
@@ -1841,7 +1841,7 @@ function resetDefaultTheme() {
     const header = document.querySelector('.header h1');
     
     if (header) {
-        header.textContent = '🔥 Monster Trucks Hot Wheels 🔥';
+        header.textContent = 'Jump the Car';
         header.style.color = '#ff6b6b';
         header.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 107, 107, 0.5)';
         header.style.background = 'none';

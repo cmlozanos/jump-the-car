@@ -1,4 +1,4 @@
-# 🚗 ¡Salta el Coche! 🚗
+# 🚗 Jump the Car 🚗
 
 Un juego educativo y divertido para niños de 5 años donde deben ayudar a un coche a saltar sobre obstáculos y llegar a la meta.
 

@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>¡Salta el Coche! 🚗</title>
+    <meta name="apple-mobile-web-app-title" content="Jump the Car">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="description" content="Un juego educativo y divertido para niños donde deben ayudar a un coche a saltar sobre obstáculos y llegar a la meta">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Iconos para PWA -->
+    <link rel="icon" type="image/svg+xml" href="./icon.svg">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    
+    <title>Jump the Car</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -14,7 +25,7 @@
 <body>
     <div class="game-container">
         <div class="header">
-            <h1>🔥 Monster Trucks Hot Wheels 🔥</h1>
+            <h1>Jump the Car</h1>
         </div>
         
         <div class="main-content">
@@ -89,6 +100,39 @@
     </div>
 
     <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado exitosamente:', registration.scope);
+                        
+                        // Verificar actualizaciones periódicamente
+                        setInterval(() => {
+                            registration.update();
+                        }, 60000); // Cada minuto
+                        
+                        // Manejar actualizaciones del Service Worker
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Hay una nueva versión disponible
+                                    console.log('Nueva versión disponible. Recarga la página para actualizar.');
+                                    // Opcional: mostrar notificación al usuario
+                                    if (confirm('Hay una nueva versión disponible. ¿Deseas recargar la página?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+        
         // Cargar script con versionado para evitar caché
         (function() {
             const APP_VERSION = '1.4.0';

@@ -7,7 +7,7 @@ PYTHON := $(shell which python3 2>/dev/null || which python 2>/dev/null)
 NODE := $(shell which node 2>/dev/null)
 
 help:
-	@echo "🚗 Makefile para ¡Salta el Coche! 🚗"
+	@echo "🚗 Makefile para Jump the Car 🚗"
 	@echo ""
 	@echo "Comandos disponibles:"
 	@echo "  make serve    - Inicia el servidor web (puerto $(PORT))"
