@@ -1,5 +1,5 @@
 importScripts('./offline-assets.js');
-var CACHE_NAME = 'jump-the-car-v1.4.1';
+var CACHE_NAME = 'jump-the-car-v1.5.0';
 self.addEventListener('install', function (event) {
     event.waitUntil(caches.open(CACHE_NAME).then(function (cache) { return cache.addAll(OFFLINE_ASSETS); }).then(function () { return self.skipWaiting(); }));
 });

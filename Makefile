@@ -1,4 +1,4 @@
-.PHONY: help serve stop install build check test
+.PHONY: help serve stop install build check test physics-check
 
 build:
 	node tools/build-offline.cjs
@@ -8,6 +8,9 @@ check:
 
 test:
 	node tools/browser-check.cjs
+
+physics-check:
+	node tools/physics-check.cjs
 
 # Variables
 PORT ?= 9000
@@ -23,6 +26,10 @@ help:
 	@echo "  make stop     - Detiene el servidor"
 	@echo "  make install  - Verifica dependencias"
 	@echo "  make help     - Muestra esta ayuda"
+	@echo "  make build    - Regenera lista offline versionada"
+	@echo "  make check    - Sintaxis, assets y física 10–60 FPS"
+	@echo "  make test     - Pruebas reales en navegador (CHROME95_PATH opcional)"
+	@echo "  make physics-check - Comparación de ticks, obstáculos y pausas"
 	@echo ""
 	@echo "Variables:"
 	@echo "  PORT=$(PORT)  - Puerto del servidor (ej: make serve PORT=3000)"

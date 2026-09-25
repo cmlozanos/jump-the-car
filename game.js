@@ -1,11 +1,12 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.4.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.5.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 let learningLocked = true;
 const learningTimers = LearningGate.createTimers();
 let learningGate = null;
 let learningAudioWasRunning = false;
+let visibilityAudioWasRunning = false;
 let soundEnabled = false;
 
 // ============================================================================
@@ -156,6 +157,25 @@ function isLevelUnlocked(levelNumber) {
 // Configuración del juego
 let canvas = null;
 let ctx = null;
+const WORLD = { width: 1200, height: 600 };
+const frameClock = JumpFrameClock.create();
+let frameRequest = null;
+let lightMode = false;
+try { lightMode = localStorage.getItem('jump-the-car-light-mode') === 'true'; } catch (_) {}
+let backgroundCache = null;
+let hudCache = null;
+
+function applyRenderMode() {
+    if (!canvas || !ctx) return;
+    canvas.width = lightMode ? 800 : WORLD.width;
+    canvas.height = lightMode ? 400 : WORLD.height;
+    ctx.setTransform(canvas.width / WORLD.width, 0, 0, canvas.height / WORLD.height, 0, 0);
+    backgroundCache = null;
+    hudCache = null;
+    document.body.classList.toggle('light-mode', lightMode);
+    document.getElementById('lightToggle').setAttribute('aria-pressed', String(lightMode));
+    draw();
+}
 
 // Estados del juego
 let gameState = 'selecting'; // 'selecting', 'playing', 'jumping', 'won', 'lost', 'exploded', 'paused'
@@ -1015,7 +1035,7 @@ let currentDistance = 0; // Distancia recorrida en el nivel actual
 
 // Inicializar contexto de audio
 function initAudio() {
-    if (learningLocked || !soundEnabled || audioContext) return;
+    if (learningLocked || document.hidden || !soundEnabled || audioContext) return;
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         // Resumir el contexto si está suspendido (necesario para algunos navegadores)
@@ -1029,7 +1049,7 @@ function initAudio() {
 
 // Función para resumir el contexto de audio (necesario para autoplay)
 function resumeAudioContext() {
-    if (learningLocked || !soundEnabled) return;
+    if (learningLocked || document.hidden || !soundEnabled) return;
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
             console.log('AudioContext resumido');
@@ -1039,7 +1059,7 @@ function resumeAudioContext() {
 
 // Reproducir sonido del motor (en loop)
 function startEngineSound() {
-    if (learningLocked || !soundEnabled) return;
+    if (learningLocked || document.hidden || !soundEnabled) return;
     if (!audioContext || isEngineSoundPlaying) return;
     
     try {
@@ -1612,12 +1632,14 @@ async function init() {
         console.error('No se pudo obtener el contexto 2D del canvas');
         return;
     }
+    applyRenderMode();
     
     // Inicializar audio
     initAudio();
     
     // Cargar sprites primero
     await loadSprites();
+    backgroundCache = null;
     
     setupCarSelection();
     setupLevelSelection();
@@ -2104,6 +2126,8 @@ function showConfigPanel() {
     // Mostrar el panel (con z-index más alto que el mensaje)
     document.getElementById('configOverlay').style.display = 'flex';
     updateConfigSpeedDisplay();
+    stopGameLoop();
+    draw();
 }
 
 // Ocultar panel de configuración
@@ -2124,7 +2148,7 @@ function hideConfigPanel() {
         }
         
         // Continuar el bucle del juego si es necesario (solo si no hay mensaje visible)
-        if ((restoredState === 'playing' || restoredState === 'jumping') && 
+        if ((restoredState === 'playing' || restoredState === 'jumping' || explosionActive) &&
             restoredState !== 'won' && restoredState !== 'lost') {
             if (!gameLoopRunning) {
                 gameLoop();
@@ -2160,6 +2184,7 @@ function accelerateCar() {
     
     // Reproducir sonido de aceleración
     playAccelerationSound();
+    draw();
 }
 
 // Desacelerar coche (disminuye la velocidad permanentemente)
@@ -2180,6 +2205,7 @@ function decelerateCar() {
     
     // Reproducir sonido de desaceleración
     playDecelerationSound();
+    draw();
 }
 
 // Reproducir sonido de aceleración
@@ -2411,8 +2437,8 @@ function setupEventListeners() {
     // Función para obtener posición del toque/clic relativa al canvas
     function getCanvasPosition(e) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        const scaleX = WORLD.width / rect.width;
+        const scaleY = WORLD.height / rect.height;
         
         let x, y;
         if (e.touches && e.touches.length > 0) {
@@ -2548,41 +2574,54 @@ function startJump() {
     carVx = 0;
 }
 
-// Bucle principal del juego
-function gameLoop() {
+// One RAF owner for driving, jumping and explosions. Pauses render on demand.
+function simulationActive() {
+    return !learningLocked && !gamePaused && !document.hidden &&
+        (gameState === 'playing' || gameState === 'jumping' || explosionActive);
+}
+
+function stopGameLoop() {
+    if (frameRequest !== null) cancelAnimationFrame(frameRequest);
+    frameRequest = null;
+    gameLoopRunning = false;
+    frameClock.reset();
+}
+
+function gameFrame(now) {
+    frameRequest = null;
     if (learningGate) learningGate.check();
-    if (learningLocked) { requestAnimationFrame(gameLoop); return; }
-    if (gameState === 'lost' || gameState === 'won' || gameState === 'exploded') {
-        // Si el juego terminó, solo dibujar y parar
-        if (gameState === 'exploded' && explosionActive) {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        } else {
-            gameLoopRunning = false; // Marcar que el bucle se detuvo
-        }
-        return;
-    }
-    
-    // Si el juego está pausado, solo dibujar (sin actualizar)
-    if (gameState === 'paused' || gamePaused) {
-        draw();
-        requestAnimationFrame(gameLoop);
-        return;
-    }
-    
-    gameLoopRunning = true; // Marcar que el bucle está ejecutándose
-    update();
+    if (!simulationActive()) { stopGameLoop(); return; }
+    frameClock.advance(now, () => {
+        update();
+        if (explosionActive) animateExplosion();
+        return simulationActive();
+    });
     draw();
-    
-    // Continuar el bucle mientras:
-    // - El coche está saltando
-    // - El coche está explotando
-    // - El juego está en estado playing (carretera en movimiento)
-    if (isJumping || explosionActive || gameState === 'playing') {
-        requestAnimationFrame(gameLoop);
+    if (simulationActive()) frameRequest = requestAnimationFrame(gameFrame);
+    else stopGameLoop();
+}
+
+function gameLoop() {
+    if (gameLoopRunning || !simulationActive()) return;
+    gameLoopRunning = true;
+    frameClock.reset();
+    frameRequest = requestAnimationFrame(gameFrame);
+}
+
+function handleVisibilityChange() {
+    if (document.hidden) {
+        stopGameLoop();
+        if (audioContext && audioContext.state === 'running') {
+            visibilityAudioWasRunning = true;
+            audioContext.suspend().catch(() => {});
+        }
     } else {
-        gameLoopRunning = false; // Marcar que el bucle se detuvo
+        if (visibilityAudioWasRunning && !learningLocked && soundEnabled) {
+            visibilityAudioWasRunning = false;
+            resumeAudioContext();
+        }
+        gameLoop();
+        if (simulationActive()) startEngineSound();
     }
 }
 
@@ -2639,7 +2678,7 @@ function update() {
         carY += carVy;
         
         // Verificar colisiones con bordes verticales del canvas
-        if (carY < 0 || carY + carHeight > canvas.height) {
+        if (carY < 0 || carY + carHeight > WORLD.height) {
             // Colisión con borde del canvas
             gameState = 'lost';
             isJumping = false;
@@ -2765,7 +2804,7 @@ function checkObstacleCollisions() {
         
         // Verificar si el obstáculo está en pantalla (entre -width y canvas.width)
         // Y asegurarse de que el obstáculo no esté después de la meta en términos de posición actual
-        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < canvas.width && obstacle.distance < currentLevelData.goalDistance) {
+        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < WORLD.width && obstacle.distance < currentLevelData.goalDistance) {
             // Verificar colisión: el coche está fijo en carFixedX, el obstáculo se mueve
             const carLeft = carFixedX;
             const carRight = carFixedX + carWidth;
@@ -2832,7 +2871,7 @@ function draw() {
     if (!canvas || !ctx) return;
     
     // Limpiar canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, WORLD.width, WORLD.height);
     
     // Dibujar fondo
     drawBackground();
@@ -2866,6 +2905,18 @@ function draw() {
 // Dibujar información en el canvas (nivel y velocidad)
 function drawCanvasButtons() {
     if (!canvas || !ctx) return;
+    const key = [currentLevel, Math.round(roadSpeed * 10), selectedCar?.vehicleType, lightMode].join(':');
+    if (!hudCache || hudCache.key !== key) {
+        const surface = document.createElement('canvas');
+        surface.width = 190;
+        surface.height = 160;
+        paintHud(surface.getContext('2d'));
+        hudCache = { key, surface };
+    }
+    ctx.drawImage(hudCache.surface, 0, 0);
+}
+
+function paintHud(ctx) {
     
     const padding = UI.BUTTON_PADDING;
     
@@ -3116,23 +3167,37 @@ function getBackgroundTheme(level) {
 
 // Dibujar fondo
 function drawBackground() {
+    const key = currentLevel + ':' + lightMode;
+    if (!backgroundCache || backgroundCache.key !== key) {
+        const surface = document.createElement('canvas');
+        surface.width = canvas.width;
+        surface.height = canvas.height;
+        const background = surface.getContext('2d');
+        background.scale(surface.width / WORLD.width, surface.height / WORLD.height);
+        paintBackground(background);
+        backgroundCache = { key, surface };
+    }
+    ctx.drawImage(backgroundCache.surface, 0, 0, WORLD.width, WORLD.height);
+}
+
+function paintBackground(ctx) {
     const theme = getBackgroundTheme(currentLevel);
     
     // Cielo con gradiente según el tema
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, WORLD.height);
     theme.skyColors.forEach((color, index) => {
         skyGradient.addColorStop(index / (theme.skyColors.length - 1), color);
     });
     ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, WORLD.width, WORLD.height);
     
     // Estrellas para tema nocturno
     if (theme.stars) {
         ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < 50; i++) {
-            const x = (i * 37) % canvas.width;
-            const y = (i * 23) % (canvas.height / 2);
-            const size = Math.random() * 2 + 1;
+        for (let i = 0; i < (lightMode ? 20 : 50); i++) {
+            const x = (i * 37) % WORLD.width;
+            const y = (i * 23) % (WORLD.height / 2);
+            const size = 1 + ((i * 17) % 20) / 10;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
@@ -3243,12 +3308,12 @@ function updateClouds() {
         cloudPositions[i].x += cloudPositions[i].speed;
         
         // Si la nube sale por la derecha, reaparecer por la izquierda
-        if (cloudPositions[i].x > canvas.width + 100) {
+        if (cloudPositions[i].x > WORLD.width + 100) {
             cloudPositions[i].x = -100;
         }
         // Si la nube sale por la izquierda, reaparecer por la derecha (por si acaso)
         if (cloudPositions[i].x < -100) {
-            cloudPositions[i].x = canvas.width + 100;
+            cloudPositions[i].x = WORLD.width + 100;
         }
     }
 }
@@ -3266,7 +3331,7 @@ function drawClouds() {
     if (sprites.cloud) {
         // Dibujar nubes usando sprite según el tema
         ctx.globalAlpha = cloudOpacity;
-        for (let i = 0; i < theme.cloudCount; i++) {
+        for (let i = 0; i < (lightMode ? Math.min(2, theme.cloudCount) : theme.cloudCount); i++) {
             const pos = cloudPositions[i];
             ctx.drawImage(sprites.cloud, pos.x, pos.y, 100, 60);
         }
@@ -3275,7 +3340,7 @@ function drawClouds() {
         // Fallback si el sprite no está cargado
         ctx.fillStyle = `rgba(255, 255, 255, ${cloudOpacity})`;
         
-        for (let i = 0; i < theme.cloudCount; i++) {
+        for (let i = 0; i < (lightMode ? Math.min(2, theme.cloudCount) : theme.cloudCount); i++) {
             const pos = cloudPositions[i];
             drawCloud(pos.x, pos.y);
         }
@@ -3295,7 +3360,7 @@ function drawCloud(x, y) {
 function drawRoad() {
     // Carretera principal
     ctx.fillStyle = '#555';
-    ctx.fillRect(0, POSITIONS.ROAD_Y, canvas.width, POSITIONS.ROAD_HEIGHT);
+    ctx.fillRect(0, POSITIONS.ROAD_Y, WORLD.width, POSITIONS.ROAD_HEIGHT);
     
     // Líneas de la carretera con scroll
     ctx.strokeStyle = '#ffff00';
@@ -3305,9 +3370,9 @@ function drawRoad() {
     const lineOffset = roadScrollX % SPEED.ROAD_LINE_OFFSET;
     const roadCenterY = POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT / 2;
     ctx.moveTo(-lineOffset, roadCenterY);
-    ctx.lineTo(canvas.width - lineOffset, roadCenterY);
+    ctx.lineTo(WORLD.width - lineOffset, roadCenterY);
     ctx.moveTo(-lineOffset + SPEED.ROAD_LINE_OFFSET, roadCenterY);
-    ctx.lineTo(canvas.width - lineOffset + SPEED.ROAD_LINE_OFFSET, roadCenterY);
+    ctx.lineTo(WORLD.width - lineOffset + SPEED.ROAD_LINE_OFFSET, roadCenterY);
     ctx.stroke();
     ctx.setLineDash([]);
     
@@ -3316,11 +3381,11 @@ function drawRoad() {
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(0, POSITIONS.ROAD_Y);
-    ctx.lineTo(canvas.width, POSITIONS.ROAD_Y);
+    ctx.lineTo(WORLD.width, POSITIONS.ROAD_Y);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(0, POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT);
-    ctx.lineTo(canvas.width, POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT);
+    ctx.lineTo(WORLD.width, POSITIONS.ROAD_Y + POSITIONS.ROAD_HEIGHT);
     ctx.stroke();
 }
 
@@ -3345,7 +3410,7 @@ function drawObstacles() {
         
         // Solo dibujar si el obstáculo está en pantalla (entre -width y canvas.width)
         // Y asegurarse de que el obstáculo no esté después de la meta en términos de posición actual
-        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < canvas.width && obstacle.distance < currentLevelData.goalDistance) {
+        if (obstacleScreenX + obstacle.width > 0 && obstacleScreenX < WORLD.width && obstacle.distance < currentLevelData.goalDistance) {
             // Determinar qué sprite usar según el tipo de obstáculo
             const obstacleType = obstacle.type || 'obstacle'; // Por defecto 'obstacle' si no se especifica
             let spriteToUse = null;
@@ -3414,7 +3479,7 @@ function drawGoal() {
     const goalHeight = DIMENSIONS.GOAL_HEIGHT;
     
     // Dibujar la meta cuando está visible en pantalla o cerca
-    if (goalScreenX + goalWidth > -GOAL_VISUAL.DRAW_RANGE_BEFORE && goalScreenX < canvas.width + GOAL_VISUAL.DRAW_RANGE_AFTER) {
+    if (goalScreenX + goalWidth > -GOAL_VISUAL.DRAW_RANGE_BEFORE && goalScreenX < WORLD.width + GOAL_VISUAL.DRAW_RANGE_AFTER) {
         // Poste de la bandera
         ctx.fillStyle = '#2d3436';
         ctx.fillRect(goalScreenX - DIMENSIONS.GOAL_POLE_WIDTH, goalY, DIMENSIONS.GOAL_POLE_WIDTH, goalHeight + DIMENSIONS.GOAL_POLE_HEIGHT_EXTRA);
@@ -3494,14 +3559,14 @@ function explodeCar() {
     // Guardar posición donde explotó (centro del coche, limitado al canvas)
     const carWidth = DIMENSIONS.CAR_WIDTH;
     const carHeight = DIMENSIONS.CAR_HEIGHT;
-    const explosionX = Math.max(carWidth/2, Math.min(canvas.width - carWidth/2, carFixedX + carWidth/2));
-    const explosionY = Math.max(carHeight/2, Math.min(canvas.height - carHeight/2, carY + carHeight/2));
+    const explosionX = Math.max(carWidth/2, Math.min(WORLD.width - carWidth/2, carFixedX + carWidth/2));
+    const explosionY = Math.max(carHeight/2, Math.min(WORLD.height - carHeight/2, carY + carHeight/2));
     
     // Crear partículas de explosión
     explosionParticles = [];
     const colors = ['#ff6b6b', '#ffd700', '#ff8c00', '#ff4500', '#ffff00'];
     
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < (lightMode ? 12 : 30); i++) {
         explosionParticles.push({
             x: explosionX,
             y: explosionY,
@@ -3515,13 +3580,13 @@ function explodeCar() {
     }
     
     // Animar explosión
-    animateExplosion();
+    gameLoop();
 }
 
 // Animar explosión
 function animateExplosion() {
     if (!explosionActive) return;
-    if (learningLocked || gamePaused) { requestAnimationFrame(animateExplosion); return; }
+    if (learningLocked || gamePaused) return;
     
     let allDead = true;
     
@@ -3535,15 +3600,11 @@ function animateExplosion() {
         }
     }
     
-    draw();
-    
     if (allDead) {
         // La explosión terminó
         explosionActive = false;
         gameState = 'lost';
         showMessage('💥 ¡BOOM! 💥', 'El coche explotó al salirse del camino. ¡Elige mejor el coche para este nivel!');
-    } else {
-        requestAnimationFrame(animateExplosion);
     }
 }
 
@@ -3562,7 +3623,7 @@ function drawExplosion() {
     }
     
     // Dibujar centro de la explosión (llama)
-    if (explosionParticles.length > 0 && explosionParticles[0].life > 0.5) {
+    if (!lightMode && explosionParticles.length > 0 && explosionParticles[0].life > 0.5) {
         const centerX = explosionParticles[0].x;
         const centerY = explosionParticles[0].y;
         
@@ -3716,6 +3777,7 @@ function showMessage(title, text, showNextLevel = false, showRestartFromLevel1 =
 
 // Reiniciar juego
 function resetGame() {
+    frameClock.reset();
     carY = POSITIONS.CAR_INITIAL_Y;
     carVx = 0;
     carVy = 0;
@@ -3927,6 +3989,7 @@ learningGate = LearningGate.mount({
     gameId: 'jump-the-car',
     onLock() {
         learningLocked = true;
+        stopGameLoop();
         learningTimers.pause();
         learningAudioWasRunning = !!audioContext && audioContext.state === 'running';
         if (learningAudioWasRunning) audioContext.suspend().catch(() => {});
@@ -3934,9 +3997,19 @@ learningGate = LearningGate.mount({
     onUnlock() {
         learningLocked = false;
         learningTimers.resume();
-        if (learningAudioWasRunning && soundEnabled) audioContext.resume().catch(() => {});
+        if ((learningAudioWasRunning || visibilityAudioWasRunning) && soundEnabled && !document.hidden) {
+            visibilityAudioWasRunning = false;
+            audioContext.resume().catch(() => {});
+        }
+        gameLoop();
     }
 });
+document.getElementById('lightToggle').addEventListener('click', () => {
+    lightMode = !lightMode;
+    try { localStorage.setItem('jump-the-car-light-mode', String(lightMode)); } catch (_) {}
+    applyRenderMode();
+});
+document.addEventListener('visibilitychange', handleVisibilityChange);
 document.getElementById('soundToggle').addEventListener('click', () => {
     soundEnabled = !soundEnabled;
     document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
@@ -3945,6 +4018,7 @@ document.getElementById('soundToggle').addEventListener('click', () => {
         initAudio(); resumeAudioContext();
         if (!gamePaused && (gameState === 'playing' || gameState === 'jumping')) startEngineSound();
     } else {
+        visibilityAudioWasRunning = false;
         stopEngineSound();
         if (audioContext) audioContext.suspend().catch(() => {});
     }

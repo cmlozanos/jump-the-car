@@ -163,7 +163,7 @@ modifica `gamePaused`: conserva el panel de configuración/pausa manual, saltos,
 posición, explosiones y temporizadores. El audio comienza apagado y se activa
 únicamente mediante 🔇/🔊. No hay dependencia de Ubuntu ni de fuentes remotas.
 
-Las físicas, coches, pistas y progreso existente permanecen sin cambios. El
+Los parámetros físicos, coches, pistas y progreso existente permanecen sin cambios. El
 service worker conserva exclusivamente sus propias cachés `jump-the-car-*` y
 precarga recursos con las mismas versiones que solicita el juego, incluidos los
 sprites de todos los niveles. Offline requiere una primera carga completa online.
@@ -184,3 +184,80 @@ Nota de dependencias preexistentes: `npm audit` detecta avisos altos en `sharp`
 0.34.x del generador de iconos (desarrollo; no se carga en el navegador).
 La actualización a 0.35.4 queda fuera de esta adaptación; no se ejecutó el
 generador ni una actualización forzada de dependencias.
+
+## Rendimiento para tablets — v1.5.0
+
+Alcance aprobado: optimización compatible con Android 5/Chrome 95, conservación
+del juego existente y modo ligero opcional. No cambia el progreso ni añade
+servicios. El modo normal sigue siendo el predeterminado; activar por defecto el
+ligero no está aprobado. El botón de hoja activa/desactiva el modo y conserva
+solamente esa preferencia local (`jump-the-car-light-mode`). Si el almacenamiento
+está bloqueado, el botón sigue funcionando durante la sesión.
+
+- Física a 60 pasos por segundo, independientemente del ritmo de dibujo. Se
+  conservan gravedad, impulsos y comprobación de colisiones de cada paso original.
+  A 10/15/20/30/60 FPS se procesan respectivamente 6/4/3/2/1 pasos por fotograma.
+  El máximo es ocho: tras bloqueos superiores a 133 ms no se intenta recuperar
+  ilimitadamente el tiempo perdido. Por debajo de 7,5 FPS puede ralentizarse la
+  simulación, sin aumentar distancias de salto o saltarse colisiones.
+- Un solo bucle para carretera, salto y explosión. Las pausas manuales,
+  educativas y la pestaña oculta no mantienen RAF ni repintado del juego. Al
+  reanudar no se acumula el tiempo detenido. El reto sigue controlando su reloj.
+  El audio activado por el usuario también se suspende al ocultar la pestaña y
+  vuelve al mostrarla, sin cambiar la preferencia ni saltarse un reto pendiente.
+- Cielo y HUD se prerenderizan y reutilizan. Cambiar nivel, vehículo, velocidad
+  o modo invalida solo la caché correspondiente. Las estrellas no se regeneran
+  aleatoriamente cada fotograma. Los botones de velocidad repintan el HUD también
+  estando en pausa.
+- Normal: 1200×600 píxeles. Ligero: 800×400 (55,6 % menos píxeles), hasta dos
+  nubes, veinte estrellas y doce partículas sin halo de explosión.
+  Selector sin pulso de sombras y sin capas decorativas costosas en modo ligero.
+  El mundo lógico permanece 1200×600: ni recortes de pista ni cambios de hitboxes/tacto.
+  Estos ahorros son de trabajo gráfico, no una promesa de FPS en hardware real.
+- SW `jump-the-car-v1.5.0`, estáticos versionados y nuevo `frame-clock.js`
+  precargado. No se eliminan cachés de otros juegos.
+
+Comprobaciones reproducibles:
+
+```sh
+make build check
+make physics-check
+make test
+CHROME95_PATH=/ruta/a/Chromium make test
+QA_DIR=/ruta/temporal/de/capturas make test
+```
+
+`physics-check` ejecuta las funciones reales de física del juego y compara cada
+paso contra ejecución directa a 60 Hz: catorce coches, cien configuraciones de
+pista durante diez segundos o hasta colisión/meta, seis tipos de obstáculo fino,
+meta, explosión, saltos, pausas, límite de recuperación y unicidad del RAF.
+No demuestra que todas las pistas puedan completarse: comprueba equivalencia
+temporal con las reglas existentes. Incluye un tramo diagnóstico sin obstáculos:
+antes recorría 900/450/225 unidades en diez segundos a 60/30/15 FPS; ahora son
+900 unidades en todos los ritmos comprobados.
+
+`make test` comprueba interacción táctil, reto inicial y recurrente, pausa sin
+repintados, caché diurna/nocturna, actualización de HUD, resolución sin cambio
+físico, preferencia local y partida offline en ambos modos. Comprueba AudioContext
+real suspendido mediante el evento de ocultación y la reanudación condicionada al
+reto, sin modificar la preferencia. Registra tiempos de
+120 dibujos como diagnóstico del motor de escritorio, no del dispositivo Android.
+
+Validación final 25/09/2026: `make check` verde; dos escenarios completos en
+Chromium 151.0.7922.34 y dos en Chromium 95.0.4630.0, a 1280×800 y 360×740.
+La tanda 95 usa además el user agent Android 5.0.2/SM-T530NU/Chrome 95.0.4638.75;
+esto comprueba rutas de navegador, no emula la CPU/GPU ni sustituye probar la tablet.
+Cero reconstrucciones de cielo en 120 dibujos por modo y cero repintados durante
+la pausa. En la última pasada95 los 120 dibujos tardaron 8,1/7,4 ms (normal/ligero,
+tablet) y 7,9/7,2 ms (teléfono), solo tiempo de envío de órdenes Canvas desde JS.
+No son FPS de presentación ni incluyen una medida fiable del coste de GPU.
+Capturas revisadas en ambos tamaños/modos: botón de hoja reconocible, misma pista
+visible y sin recortes nuevos. La segunda revisión independiente del código
+confirmó el desacoplamiento de resolución, cachés, límites y único RAF.
+
+Segunda auditoría de código: siguen presentes comentarios/documentación antigua
+que describen cuatro coches y controles inexistentes, dos definiciones antiguas
+de `playLandingSound`, emojis heredados y carga secuencial de SVG al entrar. No se
+han rediseñado ni alterado esas partes fuera del alcance de rendimiento. La
+explosión no tiene llamadores normales actuales; se conserva y prueba igualmente
+para evitar que su antiguo RAF independiente produzca duplicaciones futuras.

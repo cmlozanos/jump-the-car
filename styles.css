@@ -882,6 +882,12 @@ body::before {
 }
 /* Portal controls stay outside the existing game layout. */
 .portal-controls { position: fixed; top: 8px; left: 8px; display: flex; gap: 8px; z-index: 1001; }
+.portal-controls #lightToggle[aria-pressed="true"] { background: #246d48; outline: 3px solid #ffe28a; outline-offset: 1px; }
 .portal-controls a, .portal-controls button { width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; border: 2px solid white; border-radius: 12px; background: #173549; color: white; font: bold 28px sans-serif; text-decoration: none; cursor: pointer; }
 #loadError { position: fixed; inset: 30% 12px auto; padding: 24px; background: white; z-index: 1002; }
 [hidden] { display: none !important; }
+/* Optional low-cost decoration; normal artwork and selection borders remain. */
+.light-mode::before { display: none; }
+.light-mode .game-container, .light-mode .car-option { box-shadow: none; }
+.light-mode .car-option { animation: none; transition: none; }
+.light-mode .version-info { backdrop-filter: none; }
