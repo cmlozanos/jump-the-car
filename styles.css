@@ -880,3 +880,8 @@ body::before {
         padding: 18px 50px;
     }
 }
+/* Portal controls stay outside the existing game layout. */
+.portal-controls { position: fixed; top: 8px; left: 8px; display: flex; gap: 8px; z-index: 1001; }
+.portal-controls a, .portal-controls button { width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; border: 2px solid white; border-radius: 12px; background: #173549; color: white; font: bold 28px sans-serif; text-decoration: none; cursor: pointer; }
+#loadError { position: fixed; inset: 30% 12px auto; padding: 24px; background: white; z-index: 1002; }
+[hidden] { display: none !important; }

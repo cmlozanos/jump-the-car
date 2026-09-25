@@ -1,0 +1,18 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const cp = require('node:child_process');
+const assert = require('node:assert/strict');
+process.chdir(path.resolve(__dirname,'..'));
+cp.execFileSync(process.execPath,['tools/build-offline.cjs','--check']);
+for (const file of ['game.js','learning-gate.js','sw.js','offline-assets.js']) new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+const scope={};vm.runInNewContext(fs.readFileSync('offline-assets.js','utf8'),scope);
+for (const file of scope.OFFLINE_ASSETS) assert(fs.existsSync(file.split('?')[0]),file);
+const code=fs.readFileSync('game.js','utf8'),html=fs.readFileSync('index.html','utf8');
+assert(code.includes('let soundEnabled = false'));
+assert(!code.includes('setTimeout('));
+assert(code.includes('if (learningLocked || gamePaused) { requestAnimationFrame(animateExplosion); return; }'));
+assert(html.includes('https://cmlozanos.github.io/games/'));
+assert(html.indexOf('learning-gate.js') < html.indexOf("script.src = 'game.js"));
+assert(!html.includes('fonts.googleapis.com'));
+console.log('PASS syntax, pause guards, sound OFF, versioned offline assets and portal destination');

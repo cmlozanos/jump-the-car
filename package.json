@@ -1,5 +1,7 @@
 {
+  "scripts": {"build":"node tools/build-offline.cjs", "test":"node tools/check.cjs"},
   "devDependencies": {
+    "playwright": "1.62.1",
     "sharp": "^0.34.5"
   }
 }

@@ -17,12 +17,11 @@
     <link rel="apple-touch-icon" href="./icon-192.png">
     
     <title>Jump the Car</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=1.4.1">
 </head>
 <body>
+    <nav class="portal-controls" aria-label="Acceso y sonido"><a href="https://cmlozanos.github.io/games/" aria-label="Volver a todos los juegos">⌂</a><button id="soundToggle" aria-label="Activar o desactivar sonido" aria-pressed="false">🔇</button></nav>
+    <p id="loadError" role="alert" hidden>No se pudo cargar el reto. Recarga la página para jugar.</p>
     <div class="game-container">
         <div class="header">
             <h1>Jump the Car</h1>
@@ -99,6 +98,7 @@
         <div class="version-info" id="versionInfo">v<span id="versionNumber"></span></div>
     </div>
 
+    <script src="learning-gate.js?v=1.4.1"></script>
     <script>
         // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
@@ -135,7 +135,8 @@
         
         // Cargar script con versionado para evitar caché
         (function() {
-            const APP_VERSION = '1.4.0';
+            const APP_VERSION = '1.4.1';
+            if (!window.LearningGate) { document.getElementById('loadError').hidden = false; return; }
             const script = document.createElement('script');
             script.src = 'game.js?v=' + APP_VERSION;
             script.async = false;

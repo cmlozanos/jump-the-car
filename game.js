@@ -1,7 +1,12 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.4.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.4.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+let learningLocked = true;
+const learningTimers = LearningGate.createTimers();
+let learningGate = null;
+let learningAudioWasRunning = false;
+let soundEnabled = false;
 
 // ============================================================================
 // CONSTANTES DEL JUEGO - AJUSTE FINO CENTRALIZADO
@@ -1010,6 +1015,7 @@ let currentDistance = 0; // Distancia recorrida en el nivel actual
 
 // Inicializar contexto de audio
 function initAudio() {
+    if (learningLocked || !soundEnabled || audioContext) return;
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         // Resumir el contexto si está suspendido (necesario para algunos navegadores)
@@ -1023,6 +1029,7 @@ function initAudio() {
 
 // Función para resumir el contexto de audio (necesario para autoplay)
 function resumeAudioContext() {
+    if (learningLocked || !soundEnabled) return;
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
             console.log('AudioContext resumido');
@@ -1032,6 +1039,7 @@ function resumeAudioContext() {
 
 // Reproducir sonido del motor (en loop)
 function startEngineSound() {
+    if (learningLocked || !soundEnabled) return;
     if (!audioContext || isEngineSoundPlaying) return;
     
     try {
@@ -1065,19 +1073,19 @@ function startEngineSound() {
 // Detener sonido del motor
 function stopEngineSound() {
     if (!isEngineSoundPlaying || !engineSoundOscillator) return;
+    const stoppedOscillator = engineSoundOscillator;
+    const stoppedGain = engineSoundGain;
+    engineSoundOscillator = null;
+    engineSoundGain = null;
+    isEngineSoundPlaying = false;
     
     try {
-        if (engineSoundGain) {
-            engineSoundGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        if (stoppedGain) {
+            stoppedGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
         }
-        setTimeout(() => {
-            if (engineSoundOscillator) {
-                engineSoundOscillator.stop();
-                engineSoundOscillator.disconnect();
-                engineSoundOscillator = null;
-                engineSoundGain = null;
-                isEngineSoundPlaying = false;
-            }
+        learningTimers.set(() => {
+            stoppedOscillator.stop();
+            stoppedOscillator.disconnect();
         }, 100);
     } catch (e) {
         console.warn('Error al detener sonido del motor:', e);
@@ -1087,7 +1095,7 @@ function stopEngineSound() {
 
 // Reproducir sonido de salto
 function playJumpSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         // Crear oscilador para el sonido de salto (sonido más agudo y corto)
@@ -1131,7 +1139,7 @@ function playJumpSound() {
 
 // Reproducir sonido de choque según el tipo de obstáculo
 function playCrashSound(obstacleType = 'obstacle') {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     switch(obstacleType) {
         case 'fire':
@@ -1158,7 +1166,7 @@ function playCrashSound(obstacleType = 'obstacle') {
 
 // Sonido de choque genérico (roca/obstáculo)
 function playObstacleCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1205,7 +1213,7 @@ function playObstacleCrashSound() {
 
 // Sonido de choque con fuego
 function playFireCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1253,7 +1261,7 @@ function playFireCrashSound() {
 
 // Sonido de choque con pinchos
 function playSpikesCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1300,7 +1308,7 @@ function playSpikesCrashSound() {
 
 // Sonido de choque con árbol
 function playTreeCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1347,7 +1355,7 @@ function playTreeCrashSound() {
 
 // Sonido de choque con agujero
 function playHoleCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1394,7 +1402,7 @@ function playHoleCrashSound() {
 
 // Sonido de choque con UFO
 function playUfoCrashSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1441,7 +1449,7 @@ function playUfoCrashSound() {
 
 // Reproducir sonido de victoria/ganador
 function playWinSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1470,7 +1478,7 @@ function playWinSound() {
         });
         
         // Agregar un sonido de "fanfarria" al final
-        setTimeout(() => {
+        learningTimers.set(() => {
             const fanfareOsc = audioContext.createOscillator();
             const fanfareGain = audioContext.createGain();
             
@@ -1495,7 +1503,7 @@ function playWinSound() {
 
 // Reproducir sonido de aterrizaje
 function playLandingSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1542,7 +1550,7 @@ function playLandingSound() {
 
 // Reproducir sonido de aterrizaje
 function playLandingSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const now = audioContext.currentTime;
@@ -1795,7 +1803,7 @@ function selectCar(car, element = null) {
     roadScrollX = 0;
     
     // Mostrar panel de juego
-    setTimeout(() => {
+    learningTimers.set(() => {
         document.getElementById('carSelectionPanel').style.display = 'none';
         document.getElementById('gamePanel').style.display = 'flex';
         // Mostrar botones HTML del canvas
@@ -1806,7 +1814,7 @@ function selectCar(car, element = null) {
         if (configButton) configButton.style.display = 'flex';
         if (changeLevelButton) changeLevelButton.style.display = 'flex';
         // Actualizar posición de los botones
-        setTimeout(() => updateCanvasButtonsPosition(), 100);
+        learningTimers.set(() => updateCanvasButtonsPosition(), 100);
         gameState = 'playing';
         resetGame();
         draw();
@@ -2006,7 +2014,7 @@ function selectLevel(levelNumber) {
         if (changeLevelButton) changeLevelButton.style.display = 'flex';
         
         // Actualizar posición de los botones
-        setTimeout(() => updateCanvasButtonsPosition(), 100);
+        learningTimers.set(() => updateCanvasButtonsPosition(), 100);
         
         // Reiniciar el juego desde este nivel
         gameState = 'playing';
@@ -2176,7 +2184,7 @@ function decelerateCar() {
 
 // Reproducir sonido de aceleración
 function playAccelerationSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const oscillator = audioContext.createOscillator();
@@ -2202,7 +2210,7 @@ function playAccelerationSound() {
 
 // Reproducir sonido de desaceleración
 function playDecelerationSound() {
-    if (!audioContext) return;
+    if (learningLocked || !soundEnabled || !audioContext) return;
     
     try {
         const oscillator = audioContext.createOscillator();
@@ -2375,29 +2383,14 @@ function updateCanvasButtonsPosition() {
         img.style.height = `${spriteSize}px`;
     });
     
-    // Calcular posición relativa al canvas (en porcentaje para que sea responsive)
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const scaleX = rect.width / canvasWidth;
-    const scaleY = rect.height / canvasHeight;
-    
-    // Botón de cambiar coche (esquina superior derecha)
-    const changeX = (canvasWidth - padding - buttonSize) * scaleX;
-    const changeY = padding * scaleY;
-    changeCarButton.style.left = `${changeX}px`;
-    changeCarButton.style.top = `${changeY}px`;
-    
-    // Botón de configuración (debajo del botón de cambiar coche)
-    const configX = (canvasWidth - padding - buttonSize) * scaleX;
-    const configY = (padding + buttonSize + buttonSpacing) * scaleY;
-    configButton.style.left = `${configX}px`;
-    configButton.style.top = `${configY}px`;
-    
-    // Botón de cambiar nivel (debajo del botón de configuración)
-    const levelX = (canvasWidth - padding - buttonSize) * scaleX;
-    const levelY = (padding + (buttonSize + buttonSpacing) * 2) * scaleY;
-    changeLevelButton.style.left = `${levelX}px`;
-    changeLevelButton.style.top = `${levelY}px`;
+    // Positions and hit areas must use the same CSS pixels, not scaled world units.
+    const panelRect = canvas.parentElement.getBoundingClientRect();
+    const right = rect.right - panelRect.left - padding - buttonSize;
+    const top = rect.top - panelRect.top + padding;
+    [changeCarButton, configButton, changeLevelButton].forEach((button, index) => {
+        button.style.left = `${right - (isSmallScreen ? (2 - index) * (buttonSize + buttonSpacing) : 0)}px`;
+        button.style.top = `${top + (isSmallScreen ? 0 : index * (buttonSize + buttonSpacing))}px`;
+    });
 }
 
 // Actualizar displays de controles (ya no se usa, pero se mantiene para compatibilidad)
@@ -2514,6 +2507,7 @@ function setupEventListeners() {
 
 // Iniciar salto
 function startJump() {
+    if (learningLocked) return;
     // Solo permitir saltar si no está saltando, el juego está en estado 'playing' y no está pausado
     if (isJumping || gameState !== 'playing' || gamePaused) return;
     
@@ -2556,6 +2550,8 @@ function startJump() {
 
 // Bucle principal del juego
 function gameLoop() {
+    if (learningGate) learningGate.check();
+    if (learningLocked) { requestAnimationFrame(gameLoop); return; }
     if (gameState === 'lost' || gameState === 'won' || gameState === 'exploded') {
         // Si el juego terminó, solo dibujar y parar
         if (gameState === 'exploded' && explosionActive) {
@@ -2599,6 +2595,7 @@ function startGameLoop() {
 
 // Actualizar física
 function update() {
+    if (learningLocked) return;
     // No actualizar si el juego está pausado
     if (gameState === 'paused' || gamePaused) {
         return;
@@ -3524,6 +3521,7 @@ function explodeCar() {
 // Animar explosión
 function animateExplosion() {
     if (!explosionActive) return;
+    if (learningLocked || gamePaused) { requestAnimationFrame(animateExplosion); return; }
     
     let allDead = true;
     
@@ -3897,7 +3895,7 @@ function nextLevel() {
         if (changeLevelButton) changeLevelButton.style.display = 'flex';
         
         // Actualizar posición de los botones
-        setTimeout(() => updateCanvasButtonsPosition(), 100);
+        learningTimers.set(() => updateCanvasButtonsPosition(), 100);
         
         // Reiniciar el juego
         resetGame();
@@ -3924,5 +3922,32 @@ function nextLevel() {
     }
 }
 
+// The educational pause is independent from the child's configuration pause.
+learningGate = LearningGate.mount({
+    gameId: 'jump-the-car',
+    onLock() {
+        learningLocked = true;
+        learningTimers.pause();
+        learningAudioWasRunning = !!audioContext && audioContext.state === 'running';
+        if (learningAudioWasRunning) audioContext.suspend().catch(() => {});
+    },
+    onUnlock() {
+        learningLocked = false;
+        learningTimers.resume();
+        if (learningAudioWasRunning && soundEnabled) audioContext.resume().catch(() => {});
+    }
+});
+document.getElementById('soundToggle').addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+    document.getElementById('soundToggle').setAttribute('aria-pressed', String(soundEnabled));
+    if (soundEnabled) {
+        initAudio(); resumeAudioContext();
+        if (!gamePaused && (gameState === 'playing' || gameState === 'jumping')) startEngineSound();
+    } else {
+        stopEngineSound();
+        if (audioContext) audioContext.suspend().catch(() => {});
+    }
+});
 // Inicializar cuando se carga la página
 init();

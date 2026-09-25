@@ -153,3 +153,34 @@ El juego está diseñado con:
 - Interfaz intuitiva y fácil de usar
 
 ¡Diviértete saltando con el coche! 🎉
+
+## Compatibilidad y retos educativos — 25 septiembre 2026
+
+Adaptación aprobada al portal https://cmlozanos.github.io/games/: el botón ⌂
+sale a todos los juegos. El reto compartido aparece al entrar y cada diez minutos
+de reloj real, también tras volver de otra aplicación. La pausa educativa no
+modifica `gamePaused`: conserva el panel de configuración/pausa manual, saltos,
+posición, explosiones y temporizadores. El audio comienza apagado y se activa
+únicamente mediante 🔇/🔊. No hay dependencia de Ubuntu ni de fuentes remotas.
+
+Las físicas, coches, pistas y progreso existente permanecen sin cambios. El
+service worker conserva exclusivamente sus propias cachés `jump-the-car-*` y
+precarga recursos con las mismas versiones que solicita el juego, incluidos los
+sprites de todos los niveles. Offline requiere una primera carga completa online.
+
+Validación: `npm install`, `make build`, `make check`, `make test`.
+`CHROME95_PATH=/ruta/a/Chromium make test` usa un motor Chromium 95 real. Esto no
+sustituye verificar el rendimiento en la tablet Android 5.0.2 física.
+
+Comprobado el 25/09/2026: `make check` y `make test` correctos en Chromium
+151.0.7922.34 y 95.0.4630.0, a 1280×800 y 360×740. Las pruebas resuelven el
+reto mediante su interfaz, saltan táctilmente, avanzan diez minutos de reloj,
+comprueban pausa manual, física, partículas y temporizadores congelados y
+reanudados. También arrancan offline con nuevo reto. Se corrigió el solapamiento
+de botones móviles: su separación ahora utiliza los mismos píxeles CSS que sus
+áreas táctiles, con fila horizontal en pantallas pequeñas.
+
+Nota de dependencias preexistentes: `npm audit` detecta avisos altos en `sharp`
+0.34.x del generador de iconos (desarrollo; no se carga en el navegador).
+La actualización a 0.35.4 queda fuera de esta adaptación; no se ejecutó el
+generador ni una actualización forzada de dependencias.

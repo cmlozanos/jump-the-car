@@ -1,4 +1,13 @@
-.PHONY: help serve stop install
+.PHONY: help serve stop install build check test
+
+build:
+	node tools/build-offline.cjs
+
+check:
+	node tools/check.cjs
+
+test:
+	node tools/browser-check.cjs
 
 # Variables
 PORT ?= 9000
