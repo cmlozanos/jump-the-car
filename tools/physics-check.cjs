@@ -5,6 +5,15 @@ const path = require('node:path');
 const vm = require('node:vm');
 const Clock = require('../frame-clock.js');
 const source = fs.readFileSync(path.join(__dirname, '../game.js'), 'utf8').split('// The educational pause is independent')[0];
+const preferenceSource = source.slice(source.indexOf('let lightMode ='), source.indexOf('let backgroundCache'));
+for (const saved of [null, 'true', 'false', 'invalid', 'blocked']) {
+    const data = {'jump-the-car-light-mode': saved, unlockedLevels: '[1,2,3]'}, writes = [];
+    const scope = {localStorage: {getItem(key) { if (saved === 'blocked') throw Error('disabled'); return data[key]; },setItem(key,value) {writes.push(key);data[key]=value;}}};
+    vm.runInNewContext(preferenceSource + '; this.light=lightMode;',scope);
+    assert.equal(scope.light,saved !== 'false','saved light choice '+saved);
+    assert.deepEqual(writes,[],'reading default must not write preferences or progress');
+    assert.equal(data.unlockedLevels,'[1,2,3]');
+}
 function world(setup) {
     let nextRequest = 0; const pending = new Map();
     const scope = { JumpFrameClock: Clock, LearningGate: { createTimers: () => ({set(){}}) },

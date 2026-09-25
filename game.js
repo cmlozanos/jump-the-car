@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.5.0'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '1.5.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
 let learningLocked = true;
 const learningTimers = LearningGate.createTimers();
 let learningGate = null;
@@ -160,8 +160,11 @@ let ctx = null;
 const WORLD = { width: 1200, height: 600 };
 const frameClock = JumpFrameClock.create();
 let frameRequest = null;
-let lightMode = false;
-try { lightMode = localStorage.getItem('jump-the-car-light-mode') === 'true'; } catch (_) {}
+let lightMode = true;
+try {
+    const savedLightMode = localStorage.getItem('jump-the-car-light-mode');
+    if (savedLightMode === 'true' || savedLightMode === 'false') lightMode = savedLightMode === 'true';
+} catch (_) {}
 let backgroundCache = null;
 let hudCache = null;
 

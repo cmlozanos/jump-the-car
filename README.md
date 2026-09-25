@@ -185,12 +185,13 @@ Nota de dependencias preexistentes: `npm audit` detecta avisos altos en `sharp`
 La actualización a 0.35.4 queda fuera de esta adaptación; no se ejecutó el
 generador ni una actualización forzada de dependencias.
 
-## Rendimiento para tablets — v1.5.0
+## Rendimiento para tablets — v1.5.1
 
 Alcance aprobado: optimización compatible con Android 5/Chrome 95, conservación
 del juego existente y modo ligero opcional. No cambia el progreso ni añade
-servicios. El modo normal sigue siendo el predeterminado; activar por defecto el
-ligero no está aprobado. El botón de hoja activa/desactiva el modo y conserva
+servicios. El modo ligero es el predeterminado cuando no existe una preferencia
+válida, también si el almacenamiento está bloqueado. Una elección explícita de
+modo normal o ligero se conserva sin reescribir el progreso. El botón de hoja activa/desactiva el modo y conserva
 solamente esa preferencia local (`jump-the-car-light-mode`). Si el almacenamiento
 está bloqueado, el botón sigue funcionando durante la sesión.
 
@@ -214,7 +215,7 @@ está bloqueado, el botón sigue funcionando durante la sesión.
   Selector sin pulso de sombras y sin capas decorativas costosas en modo ligero.
   El mundo lógico permanece 1200×600: ni recortes de pista ni cambios de hitboxes/tacto.
   Estos ahorros son de trabajo gráfico, no una promesa de FPS en hardware real.
-- SW `jump-the-car-v1.5.0`, estáticos versionados y nuevo `frame-clock.js`
+- SW `jump-the-car-v1.5.1`, estáticos versionados y nuevo `frame-clock.js`
   precargado. No se eliminan cachés de otros juegos.
 
 Comprobaciones reproducibles:

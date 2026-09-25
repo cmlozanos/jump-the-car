@@ -48,8 +48,14 @@ async function solve(page) {
             await page.goto('http://127.0.0.1:' + server.address().port + '/');
             await page.locator('#learning-gate').waitFor();
             assert(await page.evaluate(() => learningLocked && !soundEnabled && !audioContext));
-            assert.equal(await page.locator('#lightToggle').getAttribute('aria-pressed'),'false');
+            assert.equal(await page.locator('#lightToggle').getAttribute('aria-pressed'),'true','first-run default is light');
+            assert(await page.evaluate(()=>lightMode));
+            assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),null,'default does not overwrite stored data');
             await solve(page);
+            await page.locator('#lightToggle').click();
+            assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),'false');
+            await page.reload();await page.locator('#learning-gate').waitFor();await solve(page);
+            assert.equal(await page.locator('#lightToggle').getAttribute('aria-pressed'),'false','explicit normal preference survives reload');
             await page.locator('#soundToggle').click();
             await page.waitForFunction(()=>audioContext && audioContext.state==='running');
             await page.evaluate(()=>{
