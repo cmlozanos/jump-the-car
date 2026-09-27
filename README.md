@@ -262,3 +262,9 @@ de `playLandingSound`, emojis heredados y carga secuencial de SVG al entrar. No 
 han rediseñado ni alterado esas partes fuera del alcance de rendimiento. La
 explosión no tiene llamadores normales actuales; se conserva y prueba igualmente
 para evitar que su antiguo RAF independiente produzca duplicaciones futuras.
+
+## Pulsación larga — 20260927-2
+
+La UI del juego bloquea los menús táctiles, callouts y selección; los campos editables conservan selección y edición. La protección de contexto solo actúa con un evento táctil o durante los dos segundos posteriores, sin cancelar globalmente los gestos.
+
+`make test` incluye `tools/touch-check.cjs`, edición con teclado y una pulsación táctil de 800 ms con liberación. Admite `CHROME95_PATH`. La emulación no sustituye comprobar el menú nativo en una tablet física. `make build` regenera la lista offline con la misma versión de recursos.

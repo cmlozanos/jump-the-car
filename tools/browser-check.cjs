@@ -3,6 +3,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const { checkTouchUI } = require('./touch-check.cjs');
 const root = path.resolve(__dirname, '..');
 async function solve(page) {
     const prompt = page.locator('#gate-prompt');
@@ -52,6 +53,7 @@ async function solve(page) {
             assert(await page.evaluate(()=>lightMode));
             assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),null,'default does not overwrite stored data');
             await solve(page);
+            await checkTouchUI(page, '#lightToggle');
             await page.locator('#lightToggle').click();
             assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),'false');
             await page.reload();await page.locator('#learning-gate').waitFor();await solve(page);
@@ -77,8 +79,12 @@ async function solve(page) {
             await page.locator('#carsGrid .car-option').first().click();
             await page.waitForFunction(() => gameState === 'playing');
             const box = await page.locator('#gameCanvas').boundingBox();
-            await page.touchscreen.tap(box.x+box.width*.5,box.y+box.height*.5);
+            const touch=await context.newCDPSession(page);
+            await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.5,y:box.y+box.height*.5,id:1}]});
             assert(await page.evaluate(() => isJumping));
+            await page.waitForTimeout(800);
+            await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+            await touch.detach();
             await page.evaluate(() => {window.__offset+=600001; learningGate.check();});
             await page.locator('#learning-gate').waitFor();
             const locked = await page.evaluate(() => [currentDistance,carY,carVy,isJumping]);

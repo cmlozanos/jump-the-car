@@ -6,6 +6,7 @@ build:
 check:
 	node tools/check.cjs
 
+# Browser checks include tools/touch-check.cjs and native long-press input.
 test:
 	node tools/browser-check.cjs
 

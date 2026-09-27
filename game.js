@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '1.5.1'; // Versión actual del juego (MAJOR.MINOR.PATCH)
+const APP_VERSION = '20260927-2'; // Versión de los recursos del juego
 let learningLocked = true;
 const learningTimers = LearningGate.createTimers();
 let learningGate = null;
