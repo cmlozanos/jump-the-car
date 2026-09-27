@@ -1,7 +1,7 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '20260927-2'; // Versión de los recursos del juego
+const APP_VERSION = '20260928-1'; // Versión de los recursos del juego
 let learningLocked = true;
 const learningTimers = LearningGate.createTimers();
 let learningGate = null;
