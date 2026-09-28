@@ -1,5 +1,10 @@
 # 🚗 Jump the Car 🚗
 
+El perfil de la tablet se configura desde Games: permite seleccionar cualquier
+combinación de sumas, restas, trazos y lectura, con al menos un tipo activo.
+El juego respeta esa selección al entrar y cada diez minutos. Sin perfil válido
+mantiene los retos predeterminados; no modifica la preferencia de sonido ni la partida.
+
 Un juego educativo y divertido para niños de 5 años donde deben ayudar a un coche a saltar sobre obstáculos y llegar a la meta.
 
 ## 🎮 Cómo Jugar
