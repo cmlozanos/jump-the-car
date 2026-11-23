@@ -1,0 +1,10 @@
+node tools/sync-learning-gate.mjs --check
+.: verified profile, gate, 100 words/images and local offline loading (935825 image bytes)
+node tools/check.cjs
+PASS 10/15/20/30/60 FPS match every original 60Hz tick: 14 cars, 100 levels, 6 obstacles, goal, bounded stalls, pauses and single RAF owner
+PASS native first-track jump route to goal
+PASS native collision -> retry clears physics without clearing progress
+PASS native dark sky and manual-motion cloud freeze; simulation regression remains unchanged
+AudioContext resumido
+PASS syntax, pause guards, sound OFF, versioned offline assets and portal destination
+PASS V2 classic kit, slug and all four exact offline assets

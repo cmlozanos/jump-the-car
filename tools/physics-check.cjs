@@ -123,3 +123,10 @@ const airborne=world(`currentLevelData={goalDistance:500,obstacles:[]}; currentD
     gameState='jumping';isJumping=true;carY=200;carVy=-1;
     this.finish=function(){update();return gameState;};`);
 assert.equal(airborne.finish(),'won','crossing the finish line mid-jump finishes the race');
+
+const appearance = world('');
+vm.runInContext("this.window={FamilyV2:{theme:()=> 'dark',motionAllowed:()=>false}};",appearance);
+assert.equal(vm.runInContext('getBackgroundTheme(1).timeOfDay',appearance),'night');
+vm.runInContext('cloudPositions=[{x:100,y:50,speed:1}]; updateClouds();',appearance);
+assert.equal(vm.runInContext('cloudPositions[0].x',appearance),100,'manual motion leaves clouds still');
+console.log('PASS native dark sky and manual-motion cloud freeze; simulation regression remains unchanged');

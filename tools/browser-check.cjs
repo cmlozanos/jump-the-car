@@ -214,6 +214,12 @@ async function solve(page) {
                 await page.screenshot({path:path.join(process.env.QA_DIR,'jump-'+viewport.width+'-normal.png'),fullPage:true});
                 await openAdults(page); await page.locator('#lightToggle').click(); await closeAdults(page);
                 await page.screenshot({path:path.join(process.env.QA_DIR,'jump-'+viewport.width+'-light.png'),fullPage:true});
+                for (const theme of ['light','dark']) {
+                    await page.locator('family-v2-shell #theme').selectOption(theme);
+                    await page.waitForTimeout(80);
+                    await page.screenshot({path:path.join(process.env.QA_DIR,'jump-'+viewport.width+'-'+theme+'-scene.png')});
+                }
+                await page.locator('family-v2-shell #theme').selectOption('light');
             }
             const ownUrl = page.url();
             await page.locator('family-v2-shell #home').click();

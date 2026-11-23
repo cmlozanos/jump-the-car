@@ -1923,48 +1923,14 @@ function setupLevelSelection() {
         const levelSpriteDiv = document.createElement('div');
         levelSpriteDiv.className = 'car-sprite'; // Usar la misma clase que los coches
         
-        // Crear imagen del nivel usando el sprite SVG cargado o cargarlo directamente
-        const levelImg = document.createElement('img');
-        
-        // Intentar usar el sprite cargado en memoria primero
-        if (sprites.levels[levelNumber]) {
-            levelImg.src = sprites.levels[levelNumber].src;
-        } else {
-            // Fallback: cargar directamente desde la URL
-            levelImg.src = `sprites/levels/level_${levelNumber}.svg?v=${APP_VERSION}`;
-        }
-        
-        levelImg.alt = `Nivel ${levelNumber}`;
-        levelImg.style.width = '100%';
-        levelImg.style.height = '100%';
-        levelImg.style.objectFit = 'contain';
-        levelImg.style.display = 'block';
-        
-        // Fallback: si la imagen no carga, mostrar número
-        levelImg.onerror = function() {
-            console.error(`Error cargando sprite para nivel ${levelNumber}: ${levelImg.src}`);
-            this.style.display = 'none';
-            levelSpriteDiv.style.background = isUnlocked ? '#f0f0f0' : '#666';
-            levelSpriteDiv.style.border = '3px solid #2d3436';
-            // Mostrar número del nivel como fallback
-            const fallbackText = document.createElement('div');
-            fallbackText.textContent = levelNumber;
-            fallbackText.style.fontSize = '3em';
-            fallbackText.style.color = isUnlocked ? '#2d3436' : '#999';
-            fallbackText.style.fontWeight = 'bold';
-            fallbackText.style.display = 'flex';
-            fallbackText.style.alignItems = 'center';
-            fallbackText.style.justifyContent = 'center';
-            fallbackText.style.height = '100%';
-            levelSpriteDiv.appendChild(fallbackText);
-        };
-        
-        levelImg.onload = function() {
-            console.log(`Sprite cargado exitosamente para nivel ${levelNumber}`);
-        };
-        
-        levelSpriteDiv.appendChild(levelImg);
-        
+        // Native text stays in the same loaded school font as the HUD (SVG image
+        // documents cannot inherit the page font, even after fontReady).
+        const levelNumberText = document.createElement('span');
+        levelNumberText.textContent = String(levelNumber);
+        levelNumberText.setAttribute('aria-hidden', 'true');
+        levelNumberText.style.cssText = 'display:grid;place-items:center;height:100%;font-size:3em;color:var(--family-ink)';
+        levelSpriteDiv.appendChild(levelNumberText);
+
         // Estructura exactamente igual que los coches
         const levelName = isUnlocked ? `Nivel ${levelNumber}` : `Nivel ${levelNumber} 🔒`;
         const levelDescription = isUnlocked ? `${level.goalDistance}m • ${level.obstacles.length} obstáculos` : 'Bloqueado';
@@ -2863,6 +2829,7 @@ function draw() {
     
     // Dibujar fondo
     drawBackground();
+    drawClouds();
     
     // Dibujar carretera
     drawRoad();
@@ -2883,8 +2850,7 @@ function draw() {
         drawExplosion();
     }
     
-    // Dibujar nubes
-    drawClouds();
+
     
     // Dibujar botones dentro del canvas (solo iconografías)
     drawCanvasButtons();
@@ -2918,7 +2884,7 @@ function paintHud(ctx) {
     ctx.strokeRect(padding, padding, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
     
     ctx.fillStyle = '#2d3436';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px "Family School"`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px "${window.FamilyV2.fontFamily}"`;
     ctx.textAlign = 'left';
     ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 30);
     
@@ -2934,7 +2900,7 @@ function paintHud(ctx) {
     // Calcular velocidad en km/h (multiplicar por 10)
     const speedKmh = Math.round(roadSpeed * 10);
     ctx.fillStyle = '#ff6b6b';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px "Family School"`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px "${window.FamilyV2.fontFamily}"`;
     ctx.textAlign = 'left';
     ctx.fillText(`${speedKmh} km/h`, padding + 10, speedDisplayY + 25);
     
@@ -2968,7 +2934,7 @@ function paintHud(ctx) {
     }
     
     ctx.fillStyle = '#2d3436';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 8}px "Family School"`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 8}px "${window.FamilyV2.fontFamily}"`;
     ctx.textAlign = 'left';
     ctx.fillText(`G (${gravityLabel}): ${currentGravity.toFixed(2)}`, padding + 8, gravityDisplayY + 18);
     
@@ -3147,15 +3113,19 @@ const backgroundThemes = [
     }
 ];
 
+function nativeDark() { return typeof window !== 'undefined' && (window.FamilyV2?.theme?.() ?? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark'; }
+function nativeMotion() { return typeof window === 'undefined' || (window.FamilyV2?.motionAllowed?.() ?? !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches); }
+
 // Obtener tema de fondo según el nivel (cambia cada nivel)
 function getBackgroundTheme(level) {
     const themeIndex = Math.min(level - 1, backgroundThemes.length - 1);
-    return backgroundThemes[themeIndex];
+    const theme = backgroundThemes[themeIndex];
+    return nativeDark() ? {...theme, skyColors:['#101e38','#35536c','#9a98a0'], stars:true, timeOfDay:'night', moonPhase:'full'} : theme;
 }
 
 // Dibujar fondo
 function drawBackground() {
-    const key = currentLevel + ':' + lightMode;
+    const key = currentLevel + ':' + lightMode + ':' + nativeDark();
     if (!backgroundCache || backgroundCache.key !== key) {
         const surface = document.createElement('canvas');
         surface.width = canvas.width;
@@ -3246,6 +3216,24 @@ function paintBackground(ctx) {
             ctx.globalAlpha = 1;
         }
     }
+    // Cached scenery: distant ridges, pine forest and meadow, no per-frame tessellation.
+    const horizon = POSITIONS.ROAD_Y;
+    for (let layer=0; layer<3; layer++) {
+        ctx.fillStyle = nativeDark() ? ['#4a6179','#304b59','#253f40'][layer] : ['#9dbac3','#739d92','#4d8065'][layer];
+        ctx.beginPath(); ctx.moveTo(0,horizon);
+        for (let x=0;x<=WORLD.width+80;x+=80) ctx.lineTo(x,horizon-85-layer*22-Math.sin(x*.008+layer*2)*55);
+        ctx.lineTo(WORLD.width,horizon); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = nativeDark() ? '#21453c' : '#548a4a';
+    ctx.fillRect(0,horizon-34,WORLD.width,34);
+    for (let x=20;x<WORLD.width;x+=67) {
+        const h=27+(x*7)%41;
+        ctx.fillStyle=nativeDark() ? '#254c49' : '#376650';
+        ctx.beginPath();ctx.moveTo(x,horizon-25-h);ctx.lineTo(x-19,horizon-25);ctx.lineTo(x+19,horizon-25);ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle=nativeDark() ? '#1c303c' : '#779b55';
+    ctx.fillRect(0,horizon+POSITIONS.ROAD_HEIGHT,WORLD.width,WORLD.height);
+
 }
 
 // Inicializar posiciones de nubes
@@ -3277,7 +3265,7 @@ function initializeCloudPositions() {
 
 // Actualizar posiciones de nubes
 function updateClouds() {
-    if (!canvas) return;
+    if (!canvas || !nativeMotion()) return;
     
     const theme = getBackgroundTheme(currentLevel);
     
@@ -3347,9 +3335,16 @@ function drawCloud(x, y) {
 // Dibujar carretera con scroll
 function drawRoad() {
     // Carretera principal
-    ctx.fillStyle = '#555';
+    const asphalt = ctx.createLinearGradient(0, POSITIONS.ROAD_Y, 0, POSITIONS.ROAD_Y+POSITIONS.ROAD_HEIGHT);
+    asphalt.addColorStop(0, '#313d4a'); asphalt.addColorStop(0.45, '#56616a'); asphalt.addColorStop(1, '#303a44');
+    ctx.fillStyle = asphalt;
     ctx.fillRect(0, POSITIONS.ROAD_Y, WORLD.width, POSITIONS.ROAD_HEIGHT);
     
+    // Reflective rumble strips emphasize the landing surface without changing its height.
+    for (let x=-40; x<WORLD.width; x+=40) {
+        ctx.fillStyle = ((x/40)&1) ? '#ede5ce' : '#bd654e';
+        ctx.fillRect(x-(roadScrollX%40), POSITIONS.ROAD_Y+2, 40, 6);
+    }
     // Líneas de la carretera con scroll
     ctx.strokeStyle = '#ffff00';
     ctx.lineWidth = 4;
@@ -3446,7 +3441,7 @@ function drawObstacles() {
             // Señal de peligro (emoji de advertencia) - solo para algunos tipos
             if (obstacleType !== 'tree' && obstacleType !== 'ufo') {
                 // Los árboles son más altos y los platillos volantes están en el aire, no necesitan el emoji arriba
-                ctx.font = 'bold 28px "Family School"';
+                ctx.font = `400 28px "${window.FamilyV2.fontFamily}"`;
                 ctx.textAlign = 'center';
                 ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
             }
@@ -3507,7 +3502,7 @@ function drawGoal() {
         
         // Texto "META" con efecto
         ctx.fillStyle = '#ffd700';
-        ctx.font = '700 36px "Family School"';
+        ctx.font = `400 36px "${window.FamilyV2.fontFamily}"`;
         ctx.textAlign = 'center';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 4;
@@ -3633,19 +3628,26 @@ function drawCar() {
     const carWidth = DIMENSIONS.CAR_WIDTH;
     const carHeight = DIMENSIONS.CAR_HEIGHT; // Aumentado para monster trucks
     
-    // Sombra del coche (solo cuando está en el suelo)
-    if (carY >= POSITIONS.GROUND_LEVEL && sprites.carShadow) {
-        ctx.drawImage(sprites.carShadow, carFixedX, carY + carHeight + DIMENSIONS.CAR_SHADOW_OFFSET, DIMENSIONS.CAR_SHADOW_WIDTH, DIMENSIONS.CAR_SHADOW_HEIGHT);
-    } else if (carY >= POSITIONS.GROUND_LEVEL) {
-        // Fallback si el sprite no está cargado
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.beginPath();
-        ctx.ellipse(carFixedX + carWidth / 2, carY + carHeight + DIMENSIONS.CAR_SHADOW_OFFSET, carWidth / 2, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
+    // Contact cue stays on the landing plane while the vehicle jumps.
+    // This is a filled ellipse, never a GPU/canvas blurred shadow.
+    const lift = Math.max(0, POSITIONS.GROUND_LEVEL-carY);
+    ctx.save();
+    ctx.fillStyle = 'rgba(13,24,34,' + Math.max(0.07,0.25-lift/1800) + ')';
+    ctx.beginPath();
+    ctx.ellipse(carFixedX+carWidth/2, POSITIONS.GROUND_LEVEL+carHeight-2,
+        Math.max(13,carWidth*.45-lift*.025), 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    if (nativeDark()) {
+        // Baked-style headlight wedge makes the next landing readable at night.
+        ctx.fillStyle = 'rgba(255,237,175,0.13)';
+        ctx.beginPath(); ctx.moveTo(carFixedX+carWidth-3,carY+carHeight*.55);
+        ctx.lineTo(carFixedX+carWidth+130,carY+carHeight*.15);
+        ctx.lineTo(carFixedX+carWidth+130,carY+carHeight+12);ctx.closePath();ctx.fill();
     }
-    
+    ctx.restore();
+
     // Efecto de movimiento (líneas de velocidad) - solo cuando salta
-    if (isJumping) {
+    if (isJumping && nativeMotion()) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 2;
         for (let i = 0; i < 3; i++) {
@@ -3685,7 +3687,9 @@ function drawCar() {
         ctx.fill();
         
         // Detalles de las ruedas
-        ctx.fillStyle = '#555';
+        const asphalt = ctx.createLinearGradient(0, POSITIONS.ROAD_Y, 0, POSITIONS.ROAD_Y+POSITIONS.ROAD_HEIGHT);
+    asphalt.addColorStop(0, '#313d4a'); asphalt.addColorStop(0.45, '#56616a'); asphalt.addColorStop(1, '#303a44');
+    ctx.fillStyle = asphalt;
         ctx.beginPath();
         ctx.arc(carFixedX + 15, carY + carHeight, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -4027,3 +4031,5 @@ soundToggle.addEventListener('click', () => {
 // Inicializar cuando se carga la página
 init();
 FamilyV2.fontReady.then(() => { hudCache = null; draw(); });
+
+window.addEventListener('familyv2:appearance', () => { backgroundCache = null; hudCache = null; draw(); });
