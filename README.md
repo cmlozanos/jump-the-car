@@ -1,3 +1,37 @@
+# Jump the Car 2.0.0
+
+## Cambios de esta versión
+
+- Kit Family V2 local: fuente, tema claro/oscuro/sistema, viewport y puntos de sesión de una hora.
+- Inicio vuelve al selector de este juego: no cambia la URL ni borra datos. El catálogo queda en el panel adulto.
+- Pausa de adultos independiente del reto educativo y de la pausa manual; puntos únicamente en la llegada nativa, 10 por nivel y sin premiar el selector.
+- Ajustes existentes trasladados sin clonar controles ni perder listeners. Audio apagado en cada carga; modo ligero por defecto (la preferencia explícita de Jump se conserva).
+- Caché PWA v2.0.0 con los cuatro recursos locales exactos del kit, incluida la licencia OFL. Sin módulos ni CDN de ejecución.
+- Los 100 niveles y los 14 coches son seleccionables sin borrar ni reescribir el progreso guardado para desbloquearlos.
+- Corregida la llegada en salto: cruzar la línea termina la carrera aunque el coche esté por encima de la bandera. Antes podía pasar la meta y perder.
+- Iconos de controles servidos como SVG original, sin rasterización intermedia que perdía detalles.
+- Regresiones de física: pista 1 completa con saltos, colisión y reinicio, meta aérea; se conservan comparaciones a 10/15/20/30/60 FPS para todos los coches y pistas. La ruta de navegador activa el manejador nativo del canvas, sin teletransporte.
+- No se afirma que todos los pares coche/pista ni todos los ritmos de toque permitan completar cada nivel.
+
+## Uso reproducible
+
+```sh
+make install       # npm ci, dependencias de desarrollo del lockfile
+make build check   # generados locales, sintaxis, recursos y regresiones
+make test          # navegador real: controles, pausas, Home local y offline
+make run           # servidor local; PORT y HOST opcionales
+```
+
+`make build` solo escribe los generados propios del repositorio. No necesita otro checkout.
+`make check` valida localmente los retos y sus 100 imágenes. No sincroniza desde otros repositorios.
+El kit se distribuye en `family-v2/`; no hay copia automática desde el repositorio canónico durante el build.
+
+## Límites de validación
+
+Pruebas automatizadas en Chromium 151 de escritorio con emulación táctil; no equivalen a medir CPU/GPU ni gestos nativos en una tablet Android física. El código mantiene formato clásico compatible con Chrome 95, pero esta entrega no incluye una ejecución en ese motor. No hay afirmación de juego libre de fallos.
+
+El historial anterior del README describe versiones previas y no sustituye estas notas.
+
 # 🚗 Jump the Car 🚗
 
 El perfil de la tablet se configura desde Games: permite seleccionar cualquier

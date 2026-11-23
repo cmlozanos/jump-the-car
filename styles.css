@@ -906,3 +906,22 @@ body::before {
 .light-mode .game-container, .light-mode .car-option { box-shadow: none; }
 .light-mode .car-option { animation: none; transition: none; }
 .light-mode .version-info { backdrop-filter: none; }
+
+/* V2: leave the playfield palette intact; theme only native UI surfaces. */
+html.family-v2 body { background:var(--family-page); color:var(--family-ink); padding-top:72px; min-height:var(--family-height,100vh); }
+.family-toolbar { position:fixed; top:8px; right:8px; z-index:1001; }
+html.family-v2 .game-container, html.family-v2 .config-content, html.family-v2 .message-content { background:var(--family-panel); color:var(--family-ink); box-shadow:none; border:0; }
+html.family-v2 h1, html.family-v2 h2, html.family-v2 h3, html.family-v2 .car-name, html.family-v2 .car-stats { color:var(--family-ink); text-shadow:none; }
+html.family-v2 .car-option { background:var(--family-button); color:var(--family-ink); border:0; box-shadow:none; }
+html.family-v2 button { border:0; }
+html.family-v2 button:focus-visible, html.family-v2 .car-option:focus-visible { outline:3px solid #b08025; outline-offset:3px; }
+html.family-v2 [data-family-setting] { position:static; border-radius:12px; background:var(--family-button); color:var(--family-ink); padding:8px; min-height:44px; min-width:44px; }
+html.family-v2 #configButton { width:52px; height:52px; }
+html.family-v2 .config-content { max-height:calc(var(--family-height,100vh) - 24px); overflow:auto; padding:20px; }
+html.family-v2 .config-button { min-width:0; padding:12px; font-size:1rem; }
+html.family-v2 .config-content h2 { font-size:1.4rem; }
+html.family-v2 .config-section h3 { font-size:1.1rem; }
+.light-mode .car-option::before { display:none; }
+@media(max-width:500px) { html.family-v2 .game-container { padding:8px; } html.family-v2 .header h1 { font-size:1.4rem; } }
+
+html.family-v2 .button-sprite { filter:none; }

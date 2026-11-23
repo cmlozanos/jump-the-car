@@ -5,6 +5,17 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { checkTouchUI } = require('./touch-check.cjs');
 const root = path.resolve(__dirname, '..');
+async function openAdults(page) {
+    if (await page.locator('family-v2-shell #adult-settings').isVisible()) return;
+    await page.locator('family-v2-shell #adults').click();
+    const parts = (await page.locator('family-v2-shell #gate-label').textContent()).match(/(\d+) × (\d+)/);
+    await page.locator('family-v2-shell #answer').fill(String(+parts[1] * +parts[2]));
+    await page.locator('family-v2-shell #gate button').click();
+}
+async function closeAdults(page) {
+    await page.locator('family-v2-shell #close').click();
+    await page.waitForFunction(() => !familyLocked);
+}
 async function solve(page) {
     const prompt = page.locator('#gate-prompt');
     if (await prompt.isVisible()) {
@@ -53,12 +64,15 @@ async function solve(page) {
             assert(await page.evaluate(()=>lightMode));
             assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),null,'default does not overwrite stored data');
             await solve(page);
-            await checkTouchUI(page, '#lightToggle');
-            await page.locator('#lightToggle').click();
+            assert.equal(await page.locator('#levelsGrid .car-option').count(), 100);
+            assert.equal(await page.locator('#levelsGrid .locked').count(), 0);
+            assert.equal(await page.evaluate(() => FamilyV2.read().points), 0, 'selection is not completion');
+            await checkTouchUI(page, '#levelsGrid .car-option');
+            await openAdults(page); await page.locator('#lightToggle').click(); await closeAdults(page);
             assert.equal(await page.evaluate(()=>localStorage.getItem('jump-the-car-light-mode')),'false');
             await page.reload();await page.locator('#learning-gate').waitFor();await solve(page);
             assert.equal(await page.locator('#lightToggle').getAttribute('aria-pressed'),'false','explicit normal preference survives reload');
-            await page.locator('#soundToggle').click();
+            await openAdults(page); await page.locator('#soundToggle').click(); await closeAdults(page);
             await page.waitForFunction(()=>audioContext && audioContext.state==='running');
             await page.evaluate(()=>{
                 Object.defineProperty(document,'hidden',{configurable:true,value:true});
@@ -74,10 +88,35 @@ async function solve(page) {
             assert(await page.evaluate(()=>learningLocked && audioContext.state==='suspended'));
             await solve(page);
             await page.waitForFunction(()=>audioContext.state==='running');
-            await page.locator('#soundToggle').click();
+            await openAdults(page); await page.locator('#soundToggle').click(); await closeAdults(page);
             await page.locator('#levelsGrid .car-option').first().click();
             await page.locator('#carsGrid .car-option').first().click();
             await page.waitForFunction(() => gameState === 'playing');
+            await openAdults(page);
+            const frozen = await page.evaluate(() => [currentDistance,carY,carVy]);
+            await page.waitForTimeout(120);
+            assert.deepEqual(await page.evaluate(() => [currentDistance,carY,carVy]), frozen, 'adult gate freezes real physics');
+            await closeAdults(page);
+            if (viewport.width === 1280) {
+                const route = await page.evaluate(() => {
+                    resetGame(); stopGameLoop();
+                    let jumps=0;
+                    for(let i=0;i<4000 && gameState!=='won' && gameState!=='lost';i++) {
+                        const obstacle=currentLevelData.obstacles.find(o=>o.distance+o.width>currentDistance);
+                        if(obstacle && obstacle.distance-currentDistance<100 && !isJumping) {
+                            canvas.dispatchEvent(new MouseEvent('click',{bubbles:true}));jumps++;
+                        }
+                        update();
+                    }
+                    return {state:gameState,jumps,points:FamilyV2.read().points,distance:currentDistance};
+                });
+                assert.equal(route.state,'won','native canvas jump handler completes actual first track');
+                assert(route.jumps>=4);
+                assert.equal(route.points,10,'only native finish awards points');
+                await page.locator('#retryButton').click();
+                assert(await page.evaluate(() => gameState==='playing' && currentDistance<10 && !isJumping));
+                console.log('Jump native route and retry',JSON.stringify(route));
+            }
             const box = await page.locator('#gameCanvas').boundingBox();
             const touch=await context.newCDPSession(page);
             await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.5,y:box.y+box.height*.5,id:1}]});
@@ -92,13 +131,13 @@ async function solve(page) {
             assert.deepEqual(await page.evaluate(() => [currentDistance,carY,carVy,isJumping]),locked);
             assert(await page.evaluate(()=>frameRequest===null && !gameLoopRunning),'no RAF while gate locked');
             await solve(page);
-            await page.locator('#configButton').click();
+            await openAdults(page); await page.locator('#configButton').click(); await closeAdults(page);
             assert(await page.evaluate(() => gamePaused));
             const pauseDraws=await page.evaluate(()=>window.__draws);
             await page.waitForTimeout(160);
             assert.equal(await page.evaluate(()=>window.__draws),pauseDraws,'paused canvas must not repaint');
             const pausedPhysics=await page.evaluate(()=>[currentDistance,carY,carVy,roadSpeed]);
-            await page.locator('#lightToggle').click();
+            await openAdults(page); await page.locator('#lightToggle').click(); await closeAdults(page);
             assert(await page.evaluate(()=>lightMode && canvas.width===800 && canvas.height===400 && WORLD.height===600));
             assert.deepEqual(await page.evaluate(()=>[currentDistance,carY,carVy,roadSpeed]),pausedPhysics,'render resolution must not affect world');
             assert(await page.evaluate(()=>{
@@ -166,17 +205,21 @@ async function solve(page) {
             const lightBox=await page.locator('#gameCanvas').boundingBox();
             await page.touchscreen.tap(lightBox.x+lightBox.width*.5,lightBox.y+lightBox.height*.5);
             assert(await page.evaluate(()=>isJumping),'offline light-mode touch jump');
-            await page.locator('#configButton').click();
-            await page.locator('#lightToggle').click();
+            await openAdults(page); await page.locator('#configButton').click(); await closeAdults(page);
+            await openAdults(page); await page.locator('#lightToggle').click(); await closeAdults(page);
             assert(await page.evaluate(()=>!lightMode && canvas.width===1200 && canvas.height===600),'normal mode restored');
             if(process.env.QA_DIR) {
                 fs.mkdirSync(process.env.QA_DIR,{recursive:true});
                 await page.locator('#closeConfigButton').click();
                 await page.screenshot({path:path.join(process.env.QA_DIR,'jump-'+viewport.width+'-normal.png'),fullPage:true});
-                await page.locator('#lightToggle').click();
+                await openAdults(page); await page.locator('#lightToggle').click(); await closeAdults(page);
                 await page.screenshot({path:path.join(process.env.QA_DIR,'jump-'+viewport.width+'-light.png'),fullPage:true});
             }
-            assert.equal(await page.locator('.portal-controls a').getAttribute('href'),'https://cmlozanos.github.io/games/');
+            const ownUrl = page.url();
+            await page.locator('family-v2-shell #home').click();
+            await page.locator('#levelsGrid .car-option').first().waitFor();
+            assert.equal(page.url(), ownUrl, 'Home stays in this game');
+            assert(await page.evaluate(() => gameState === 'selecting' && !gamePaused));
             assert.deepEqual(errors,[]);
             await context.close();
             console.log('PASS',viewport.width+'x'+viewport.height,'entry/touch/10min/hidden audio/zero paused draws/caches/light world invariance/HUD invalidation/explosion/timers/offline persistence');

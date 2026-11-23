@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Jump the Car">
+    <meta name="application-version" content="2.0.0">
     <meta name="theme-color" content="#FFD700">
     <meta name="description" content="Un juego educativo y divertido para niños donde deben ayudar a un coche a saltar sobre obstáculos y llegar a la meta">
     
@@ -17,10 +18,13 @@
     <link rel="apple-touch-icon" href="./icon-192.png">
     
     <title>Jump the Car</title>
-    <link rel="stylesheet" href="styles.css?v=20260928-1">
+    <link rel="stylesheet" href="styles.css?v=2.0.0">
+    <link rel="stylesheet" href="family-v2/family.css?v=2.0.0">
+    <script defer src="family-v2/family.js?v=2.0.0" data-game="jump-the-car"></script>
 </head>
-<body>
-    <nav class="portal-controls" aria-label="Acceso, sonido y rendimiento"><a href="https://cmlozanos.github.io/games/" aria-label="Volver a todos los juegos">⌂</a><button id="soundToggle" aria-label="Activar o desactivar sonido" aria-pressed="false">🔇</button><button id="lightToggle" aria-label="Modo ligero: menos efectos" title="Modo ligero: menos efectos" aria-pressed="true"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 32 32"><path d="M26 5C10 3 3 12 7 21c4 7 19 5 19-16Z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="m5 28 16-16M11 22v-8m0 8h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button></nav>
+<body data-game="jump-the-car">
+    <div class="family-toolbar" data-family-slot></div>
+    <div hidden><button id="soundToggle" data-family-setting aria-label="Activar o desactivar sonido" aria-pressed="false">🔇</button><button id="lightToggle" data-family-setting aria-label="Modo ligero: menos efectos" title="Modo ligero: menos efectos" aria-pressed="true"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 32 32"><path d="M26 5C10 3 3 12 7 21c4 7 19 5 19-16Z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="m5 28 16-16M11 22v-8m0 8h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button></div>
     <p id="loadError" role="alert" hidden>No se pudo cargar el reto. Recarga la página para jugar.</p>
     <div class="game-container">
         <div class="header">
@@ -36,7 +40,7 @@
 
             <!-- Panel de selección de niveles -->
             <div class="level-selection-panel" id="levelSelectionPanel" style="display: none;">
-                <h2>Selecciona un Nivel</h2>
+                <h2>Elige una pista</h2>
                 <div class="levels-grid" id="levelsGrid"></div>
             </div>
 
@@ -47,7 +51,7 @@
                 <button id="changeCarButton" class="canvas-button change-car-button-html" style="display: none;">
                     <img src="" alt="Cambiar coche" class="button-sprite">
                 </button>
-                <button id="configButton" class="canvas-button config-button-html" style="display: none;">
+                <button id="configButton" data-family-setting class="canvas-button config-button-html" style="display: none;">
                     <img src="" alt="Configuración" class="button-sprite">
                 </button>
                 <button id="changeLevelButton" class="canvas-button change-level-button-html" style="display: none;">
@@ -61,9 +65,9 @@
             <div class="message-content">
                 <h2 id="messageTitle"></h2>
                 <p id="messageText"></p>
-                <button id="nextLevelButton" style="display: none;">Siguiente Nivel</button>
-                <button id="retryButton">Intentar de Nuevo</button>
-                <button id="restartFromLevel1Button" style="display: none;">🔄 Reiniciar desde el Nivel 1</button>
+                <button id="nextLevelButton" style="display: none;">Otra pista</button>
+                <button id="retryButton">Otra vez</button>
+                <button id="restartFromLevel1Button" style="display: none;">Volver al principio</button>
             </div>
         </div>
 
@@ -72,18 +76,18 @@
             <div class="config-content">
                 <h2><img src="" alt="Configuración" class="config-title-icon"> Configuración</h2>
                 <div class="config-section">
-                    <h3>Velocidad del Vehículo</h3>
+                    <h3>Velocidad</h3>
                     <div class="speed-controls">
                         <button id="accelerateButton" class="config-button accelerate-btn">
-                            <img src="" alt="Acelerar" class="button-icon-img">
-                            <span class="button-label">Acelerar</span>
+                            <img src="" alt="Más rápido" class="button-icon-img">
+                            <span class="button-label">Más rápido</span>
                         </button>
                         <div class="speed-display">
                             <span id="currentSpeedDisplay">15 km/h</span>
                         </div>
                         <button id="decelerateButton" class="config-button decelerate-btn">
-                            <img src="" alt="Desacelerar" class="button-icon-img">
-                            <span class="button-label">Desacelerar</span>
+                            <img src="" alt="Más despacio" class="button-icon-img">
+                            <span class="button-label">Más despacio</span>
                         </button>
                     </div>
                 </div>
@@ -98,8 +102,8 @@
         <div class="version-info" id="versionInfo">v<span id="versionNumber"></span></div>
     </div>
 
-    <script src="learning-profile.js?v=20260928-4"></script><script src="reading-words.js?v=20260928-1"></script><script src="learning-gate.js?v=20260928-4"></script>
-    <script src="frame-clock.js?v=20260928-1"></script>
+    <script defer src="learning-profile.js?v=20260928-4"></script><script defer src="reading-words.js?v=20260928-1"></script><script defer src="learning-gate.js?v=20260928-4"></script>
+    <script defer src="frame-clock.js?v=2.0.0"></script>
     <script>
         // Keep native long-press menus off game UI without cancelling touch gestures.
         let lastGameTouch = -Infinity;
@@ -145,15 +149,7 @@
             });
         }
         
-        // Cargar script con versionado para evitar caché
-        (function() {
-            const APP_VERSION = '20260928-1';
-            if (!window.LearningGate || !window.JumpFrameClock) { document.getElementById('loadError').hidden = false; return; }
-            const script = document.createElement('script');
-            script.src = 'game.js?v=' + APP_VERSION;
-            script.async = false;
-            document.body.appendChild(script);
-        })();
     </script>
+    <script defer src="game.js?v=2.0.0"></script>
 </body>
 </html>

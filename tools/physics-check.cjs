@@ -92,3 +92,34 @@ vm.runInContext('learningLocked=false; handleVisibilityChange();',owner);
 assert.equal(vm.runInContext('audioContext.state',owner),'running');
 assert.equal(vm.runInContext('soundEnabled',owner),true,'visibility never changes preference');
 console.log('PASS 10/15/20/30/60 FPS match every original 60Hz tick: '+straight.carCount+' cars, '+straight.levelCount+' levels, 6 obstacles, goal, bounded stalls, pauses and single RAF owner');
+
+// Play the real first track to its real goal: jump on approach, no position teleport.
+const route=world(`currentLevel=1; currentLevelData=levels[0]; roadSpeed=getRoadSpeedForLevel(1);
+    angle=selectedCar.baseAngle; speed=selectedCar.baseSpeed;
+    this.drive=function(){
+        const next=currentLevelData.obstacles.find(o=>o.distance+o.width>currentDistance);
+        if(next && next.distance-currentDistance<100 && !isJumping) startJump();
+        update(); return gameState;
+    };`);
+let routeState; for(let i=0;i<4000;i++){routeState=route.drive();if(routeState==='won'||routeState==='lost')break;}
+assert.equal(routeState,'won','actual first track reaches goal by jumping, without teleport');
+console.log('PASS native first-track jump route to goal');
+
+// Failed landing must stop ticking and retry must reset the real state.
+const retry=world(`currentLevelData=levels[0]; updateConfigSpeedDisplay=function(){}; applyCarTheme=function(){};
+    this.exercise=function(){
+        currentDistance=450; carY=500; isJumping=false; update(); const lost=gameState;
+        resetGame(); return [lost,gameState,currentDistance,carY,isJumping,explosionActive];
+    };`);
+assert.deepEqual(Array.from(retry.exercise()),['lost','playing',0,500,false,false]);
+console.log('PASS native collision -> retry clears physics without clearing progress');
+
+// A released touch/click after a loss must not advance the frozen world.
+const ended=world(`gameState='lost'; currentLevelData=levels[0]; this.ended=function(){update();return [currentDistance,carY,gameState];};`);
+assert.deepEqual(Array.from(ended.ended()),[0,500,'lost']);
+
+// Cross the finish line in the air: finishing a race must not depend on touching the flag's fabric.
+const airborne=world(`currentLevelData={goalDistance:500,obstacles:[]}; currentDistance=499;
+    gameState='jumping';isJumping=true;carY=200;carVy=-1;
+    this.finish=function(){update();return gameState;};`);
+assert.equal(airborne.finish(),'won','crossing the finish line mid-jump finishes the race');

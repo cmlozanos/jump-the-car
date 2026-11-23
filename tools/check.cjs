@@ -13,8 +13,15 @@ assert(code.includes('let soundEnabled = false'));
 assert(!code.includes('setTimeout('));
 assert(code.includes('if (learningLocked || gamePaused) return;'));
 assert(!code.includes('requestAnimationFrame(animateExplosion)'));
-assert(html.includes('https://cmlozanos.github.io/games/'));
-assert(html.indexOf('learning-gate.js') < html.indexOf("script.src = 'game.js"));
+assert(fs.readFileSync('family-v2/family.js','utf8').includes('https://cmlozanos.github.io/games/'));
+assert(html.indexOf('learning-gate.js') < html.indexOf('src="game.js'));
 assert(!html.includes('fonts.googleapis.com'));
 cp.execFileSync(process.execPath,['tools/physics-check.cjs'],{stdio:'inherit'});
 console.log('PASS syntax, pause guards, sound OFF, versioned offline assets and portal destination');
+
+const kitFiles = ['family.css','family.js','playwrite-es.ttf','OFL.txt'];
+const cached = scope.OFFLINE_ASSETS;
+for (const file of kitFiles) assert(cached.includes('./family-v2/'+file+(file.endsWith('.css')||file.endsWith('.js')?'?v=2.0.0':'')), 'Exact kit precache '+file);
+assert(html.includes('defer src="family-v2/family.js?v=2.0.0" data-game="jump-the-car"'));
+new vm.Script(fs.readFileSync('family-v2/family.js','utf8'));
+console.log('PASS V2 classic kit, slug and all four exact offline assets');

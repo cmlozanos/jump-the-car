@@ -1,8 +1,10 @@
 // ============================================================================
 // VERSIÓN DE LA APLICACIÓN
 // ============================================================================
-const APP_VERSION = '20260928-1'; // Versión de los recursos del juego
+const APP_VERSION = '2.0.0'; // Versión de los recursos del juego
 let learningLocked = true;
+let educationalLocked = true;
+let familyLocked = false;
 const learningTimers = LearningGate.createTimers();
 let learningGate = null;
 let learningAudioWasRunning = false;
@@ -150,8 +152,8 @@ function unlockLevel(levelNumber) {
 
 // Verificar si un nivel está desbloqueado
 function isLevelUnlocked(levelNumber) {
-    const unlocked = getUnlockedLevels();
-    return unlocked.includes(levelNumber);
+    // V2 offers every track without rewriting the saved progression cookie.
+    return Number.isInteger(levelNumber) && levelNumber >= 1 && levelNumber <= levels.length;
 }
 
 // Configuración del juego
@@ -176,7 +178,7 @@ function applyRenderMode() {
     backgroundCache = null;
     hudCache = null;
     document.body.classList.toggle('light-mode', lightMode);
-    document.getElementById('lightToggle').setAttribute('aria-pressed', String(lightMode));
+    lightToggle.setAttribute('aria-pressed', String(lightMode));
     draw();
 }
 
@@ -1662,7 +1664,6 @@ async function init() {
     
     // Actualizar sprites de los botones después de cargar
     const changeCarButton = document.getElementById('changeCarButton');
-    const configButton = document.getElementById('configButton');
     const changeLevelButton = document.getElementById('changeLevelButton');
     if (changeCarButton) {
         updateButtonSprite(changeCarButton, sprites.carIcon, `sprites/environment/car_icon.svg?v=${APP_VERSION}`);
@@ -1739,7 +1740,8 @@ function setupCarSelection() {
     
     cars.forEach(car => {
         console.log(`Creando coche ${car.id}: ${car.name}`);
-        const carOption = document.createElement('div');
+        const carOption = document.createElement('button');
+        carOption.type = 'button';
         carOption.className = 'car-option';
         
         // Crear elemento de imagen para el sprite del coche
@@ -1784,6 +1786,7 @@ function setupCarSelection() {
 
 // Seleccionar coche
 function selectCar(car, element = null) {
+    FamilyV2.touch();
     selectedCar = car;
     document.querySelectorAll('.car-option').forEach(opt => opt.classList.remove('selected'));
     
@@ -1833,7 +1836,6 @@ function selectCar(car, element = null) {
         document.getElementById('gamePanel').style.display = 'flex';
         // Mostrar botones HTML del canvas
         const changeCarButton = document.getElementById('changeCarButton');
-        const configButton = document.getElementById('configButton');
         const changeLevelButton = document.getElementById('changeLevelButton');
         if (changeCarButton) changeCarButton.style.display = 'flex';
         if (configButton) configButton.style.display = 'flex';
@@ -1892,9 +1894,7 @@ function setupLevelSelection() {
     
     levelsGrid.innerHTML = '';
     
-    // Mostrar solo los primeros 20 niveles por ahora
-    const MAX_VISIBLE_LEVELS = 20;
-    const visibleLevels = levels.slice(0, MAX_VISIBLE_LEVELS);
+    const visibleLevels = levels;
     
     console.log(`Creando ${visibleLevels.length} niveles visibles en el panel de selección (de ${levels.length} totales)`);
     
@@ -1904,7 +1904,8 @@ function setupLevelSelection() {
         const isCurrentLevel = levelNumber === currentLevel;
         
         console.log(`Creando nivel ${levelNumber}: ${isUnlocked ? 'desbloqueado' : 'bloqueado'}`);
-        const levelOption = document.createElement('div');
+        const levelOption = document.createElement('button');
+        levelOption.type = 'button';
         levelOption.className = 'car-option'; // Usar la misma clase que los coches
         
         if (isCurrentLevel) {
@@ -1990,6 +1991,7 @@ function setupLevelSelection() {
 
 // Seleccionar nivel
 function selectLevel(levelNumber) {
+    FamilyV2.touch();
     if (!isLevelUnlocked(levelNumber)) {
         return; // No permitir seleccionar niveles bloqueados
     }
@@ -2032,7 +2034,6 @@ function selectLevel(levelNumber) {
         
         // Mostrar botones HTML del canvas
         const changeCarButton = document.getElementById('changeCarButton');
-        const configButton = document.getElementById('configButton');
         const changeLevelButton = document.getElementById('changeLevelButton');
         if (changeCarButton) changeCarButton.style.display = 'flex';
         if (configButton) configButton.style.display = 'flex';
@@ -2088,7 +2089,6 @@ function changeLevel() {
     document.getElementById('gamePanel').style.display = 'none';
     // Ocultar botones HTML del canvas
     const changeCarButton = document.getElementById('changeCarButton');
-    const configButton = document.getElementById('configButton');
     const changeLevelButton = document.getElementById('changeLevelButton');
     if (changeCarButton) changeCarButton.style.display = 'none';
     if (configButton) configButton.style.display = 'none';
@@ -2282,7 +2282,6 @@ function changeCar() {
     document.getElementById('gamePanel').style.display = 'none';
     // Ocultar botones HTML del canvas
     const changeCarButton = document.getElementById('changeCarButton');
-    const configButton = document.getElementById('configButton');
     const changeLevelButton = document.getElementById('changeLevelButton');
     if (changeCarButton) changeCarButton.style.display = 'none';
     if (configButton) configButton.style.display = 'none';
@@ -2315,7 +2314,6 @@ function setupControls() {
 // Configurar botones HTML del canvas
 function setupCanvasButtons() {
     const changeCarButton = document.getElementById('changeCarButton');
-    const configButton = document.getElementById('configButton');
     const changeLevelButton = document.getElementById('changeLevelButton');
     
     if (changeCarButton) {
@@ -2359,29 +2357,14 @@ function updateButtonSprite(buttonElement, spriteImage, fallbackPath) {
     const imgElement = buttonElement.querySelector('img');
     if (!imgElement) return;
     
-    // Si el sprite está cargado, crear un nuevo elemento img con el sprite
-    if (spriteImage) {
-        // Crear un nuevo elemento img usando el sprite cargado
-        const canvas = document.createElement('canvas');
-        canvas.width = 40;
-        canvas.height = 40;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(spriteImage, 0, 0, 40, 40);
-        
-        // Convertir canvas a data URL
-        const dataURL = canvas.toDataURL();
-        imgElement.src = dataURL;
-    } else {
-        // Usar la ruta de fallback
-        imgElement.src = fallbackPath;
-    }
+    // Keep the vector source crisp instead of rasterizing its load-time image size.
+    imgElement.src = fallbackPath;
 }
 
 // Actualizar posición de los botones HTML según el tamaño del canvas
 function updateCanvasButtonsPosition() {
     const canvas = document.getElementById('gameCanvas');
     const changeCarButton = document.getElementById('changeCarButton');
-    const configButton = document.getElementById('configButton');
     const changeLevelButton = document.getElementById('changeLevelButton');
     
     if (!canvas || !changeCarButton || !configButton || !changeLevelButton) return;
@@ -2399,8 +2382,6 @@ function updateCanvasButtonsPosition() {
     // Aplicar tamaño a los botones
     changeCarButton.style.width = `${buttonSize}px`;
     changeCarButton.style.height = `${buttonSize}px`;
-    configButton.style.width = `${buttonSize}px`;
-    configButton.style.height = `${buttonSize}px`;
     changeLevelButton.style.width = `${buttonSize}px`;
     changeLevelButton.style.height = `${buttonSize}px`;
     
@@ -2416,8 +2397,8 @@ function updateCanvasButtonsPosition() {
     const panelRect = canvas.parentElement.getBoundingClientRect();
     const right = rect.right - panelRect.left - padding - buttonSize;
     const top = rect.top - panelRect.top + padding;
-    [changeCarButton, configButton, changeLevelButton].forEach((button, index) => {
-        button.style.left = `${right - (isSmallScreen ? (2 - index) * (buttonSize + buttonSpacing) : 0)}px`;
+    [changeCarButton, changeLevelButton].forEach((button, index) => {
+        button.style.left = `${right - (isSmallScreen ? (1 - index) * (buttonSize + buttonSpacing) : 0)}px`;
         button.style.top = `${top + (isSmallScreen ? 0 : index * (buttonSize + buttonSpacing))}px`;
     });
 }
@@ -2704,6 +2685,7 @@ function update() {
         // Verificar si llegó a la meta mientras salta
         if (checkGoalReached()) {
             gameState = 'won';
+            if (typeof window !== 'undefined' && window.FamilyV2) FamilyV2.award('level-' + currentLevel, 10);
             isJumping = false;
             playWinSound(); // Reproducir sonido de victoria
             showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
@@ -2752,6 +2734,7 @@ function update() {
         // Si no está saltando pero está en estado playing, verificar si llegó a la meta
         if (checkGoalReached()) {
             gameState = 'won';
+            if (typeof window !== 'undefined' && window.FamilyV2) FamilyV2.award('level-' + currentLevel, 10);
             playWinSound(); // Reproducir sonido de victoria
             showMessage('¡Felicidades! 🎉', '¡Llegaste a la meta! ¡Eres genial!', true);
             return;
@@ -2834,6 +2817,8 @@ function checkObstacleCollisions() {
 
 // Verificar si llegó a la meta (colisión con la bandera)
 function checkGoalReached() {
+    // A finish is a line across the track, not a low obstacle to land on.
+    if (currentDistance >= currentLevelData.goalDistance) return true;
     const carWidth = DIMENSIONS.CAR_WIDTH;
     const carHeight = DIMENSIONS.CAR_HEIGHT;
     const goalY = POSITIONS.GOAL_Y;
@@ -2933,7 +2918,7 @@ function paintHud(ctx) {
     ctx.strokeRect(padding, padding, UI.LEVEL_INFO_WIDTH, UI.LEVEL_INFO_HEIGHT);
     
     ctx.fillStyle = '#2d3436';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px Roboto`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE}px "Family School"`;
     ctx.textAlign = 'left';
     ctx.fillText(`Nivel: ${currentLevel}`, padding + 10, padding + 30);
     
@@ -2949,7 +2934,7 @@ function paintHud(ctx) {
     // Calcular velocidad en km/h (multiplicar por 10)
     const speedKmh = Math.round(roadSpeed * 10);
     ctx.fillStyle = '#ff6b6b';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px Roboto`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 4}px "Family School"`;
     ctx.textAlign = 'left';
     ctx.fillText(`${speedKmh} km/h`, padding + 10, speedDisplayY + 25);
     
@@ -2983,7 +2968,7 @@ function paintHud(ctx) {
     }
     
     ctx.fillStyle = '#2d3436';
-    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 8}px Roboto`;
+    ctx.font = `700 ${UI.LEVEL_INFO_FONT_SIZE - 8}px "Family School"`;
     ctx.textAlign = 'left';
     ctx.fillText(`G (${gravityLabel}): ${currentGravity.toFixed(2)}`, padding + 8, gravityDisplayY + 18);
     
@@ -3461,7 +3446,7 @@ function drawObstacles() {
             // Señal de peligro (emoji de advertencia) - solo para algunos tipos
             if (obstacleType !== 'tree' && obstacleType !== 'ufo') {
                 // Los árboles son más altos y los platillos volantes están en el aire, no necesitan el emoji arriba
-                ctx.font = 'bold 28px Roboto';
+                ctx.font = 'bold 28px "Family School"';
                 ctx.textAlign = 'center';
                 ctx.fillText('⚠️', obstacleScreenX + obstacle.width / 2, obstacle.y - 10);
             }
@@ -3522,7 +3507,7 @@ function drawGoal() {
         
         // Texto "META" con efecto
         ctx.fillStyle = '#ffd700';
-        ctx.font = '700 36px Roboto';
+        ctx.font = '700 36px "Family School"';
         ctx.textAlign = 'center';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 4;
@@ -3953,7 +3938,6 @@ function nextLevel() {
         
         // Asegurar que los botones del canvas estén visibles
         const changeCarButton = document.getElementById('changeCarButton');
-        const configButton = document.getElementById('configButton');
         const changeLevelButton = document.getElementById('changeLevelButton');
         if (changeCarButton) changeCarButton.style.display = 'flex';
         if (configButton) configButton.style.display = 'flex';
@@ -3987,36 +3971,50 @@ function nextLevel() {
     }
 }
 
-// The educational pause is independent from the child's configuration pause.
-learningGate = LearningGate.mount({
-    gameId: 'jump-the-car',
-    onLock() {
-        learningLocked = true;
+// The educational pause is independent from manual settings and the family gate.
+// Stable references preserve handlers when settings move within the light DOM slot.
+const soundToggle = document.getElementById('soundToggle');
+const lightToggle = document.getElementById('lightToggle');
+const configButton = document.getElementById('configButton');
+function syncFamilyPause() {
+    const locked = educationalLocked || familyLocked;
+    if (locked === learningLocked) return;
+    learningLocked = locked;
+    if (locked) {
         stopGameLoop();
         learningTimers.pause();
         learningAudioWasRunning = !!audioContext && audioContext.state === 'running';
         if (learningAudioWasRunning) audioContext.suspend().catch(() => {});
-    },
-    onUnlock() {
-        learningLocked = false;
+    } else {
         learningTimers.resume();
+        if (soundEnabled && !audioContext) initAudio();
         if ((learningAudioWasRunning || visibilityAudioWasRunning) && soundEnabled && !document.hidden) {
             visibilityAudioWasRunning = false;
             audioContext.resume().catch(() => {});
         }
         gameLoop();
     }
+}
+FamilyV2.register({
+    home() { document.getElementById('configOverlay').style.display = 'none'; document.getElementById('messageOverlay').style.display = 'none'; changeLevel(); },
+    pause() { familyLocked = true; syncFamilyPause(); },
+    resume() { familyLocked = false; syncFamilyPause(); }
 });
-document.getElementById('lightToggle').addEventListener('click', () => {
+learningGate = LearningGate.mount({
+    gameId: 'jump-the-car',
+    onLock() { educationalLocked = true; syncFamilyPause(); },
+    onUnlock() { educationalLocked = false; syncFamilyPause(); }
+});
+lightToggle.addEventListener('click', () => {
     lightMode = !lightMode;
     try { localStorage.setItem('jump-the-car-light-mode', String(lightMode)); } catch (_) {}
     applyRenderMode();
 });
 document.addEventListener('visibilitychange', handleVisibilityChange);
-document.getElementById('soundToggle').addEventListener('click', () => {
+soundToggle.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
-    document.getElementById('soundToggle').setAttribute('aria-pressed', String(soundEnabled));
+    soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+    soundToggle.setAttribute('aria-pressed', String(soundEnabled));
     if (soundEnabled) {
         initAudio(); resumeAudioContext();
         if (!gamePaused && (gameState === 'playing' || gameState === 'jumping')) startEngineSound();
@@ -4028,3 +4026,4 @@ document.getElementById('soundToggle').addEventListener('click', () => {
 });
 // Inicializar cuando se carga la página
 init();
+FamilyV2.fontReady.then(() => { hudCache = null; draw(); });

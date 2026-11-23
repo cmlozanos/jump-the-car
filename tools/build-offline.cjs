@@ -10,7 +10,7 @@ function gateUrl(file) {
   return './'+url;
 }
 function walk(dir) { return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry => entry.isDirectory() ? walk(dir+'/'+entry.name) : [dir+'/'+entry.name]); }
-const files = ['./','./index.html','./manifest.json','./icon.svg','./icon-192.png','./icon-512.png','./offline-assets.js', './game.js?v='+version, './styles.css?v='+version, gateUrl('learning-gate.js'), './frame-clock.js?v='+version];
+const files = ['./family-v2/family.css?v=2.0.0','./family-v2/family.js?v=2.0.0','./family-v2/playwrite-es.ttf','./family-v2/OFL.txt','./','./index.html','./manifest.json','./icon.svg','./icon-192.png','./icon-512.png','./offline-assets.js', './game.js?v='+version, './styles.css?v='+version, gateUrl('learning-gate.js'), './frame-clock.js?v='+version];
 files.push(gateUrl('learning-profile.js'), gateUrl('reading-words.js'), './READING_ASSETS.md', './READING_WORDS.md', './reading-images/manifest.json');
 for (const file of walk('reading-images').filter(file=>file.endsWith('.png')).sort()) files.push('./'+file);
 for (const file of walk('sprites').filter(file=>file.endsWith('.svg')).sort()) files.push('./'+file+'?v='+version);

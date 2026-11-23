@@ -10,7 +10,7 @@ check-gates:
 
 check: check-gates
 
-.PHONY: help serve stop install build check test physics-check
+.PHONY: help run serve stop install build check test physics-check
 
 build:
 	node tools/build-offline.cjs
@@ -48,6 +48,8 @@ help:
 	@echo "  PORT=$(PORT)  - Puerto del servidor (ej: make serve PORT=3000)"
 	@echo "  HOST=$(HOST)  - Host del servidor (ej: make serve HOST=0.0.0.0)"
 
+run: serve
+
 serve:
 	@echo "🚀 Iniciando servidor web..."
 	@if [ -n "$(PYTHON)" ]; then \
@@ -78,22 +80,7 @@ stop:
 	fi
 
 install:
-	@echo "🔍 Verificando dependencias..."
-	@if [ -n "$(PYTHON)" ]; then \
-		echo "✅ Python encontrado: $(PYTHON)"; \
-		$(PYTHON) --version; \
-	else \
-		echo "❌ Python no encontrado"; \
-	fi
-	@if [ -n "$(NODE)" ]; then \
-		echo "✅ Node.js encontrado: $(NODE)"; \
-		$(NODE) --version; \
-	else \
-		echo "⚠️  Node.js no encontrado (opcional)"; \
-	fi
-	@echo ""
-	@echo "✅ El juego está listo para ejecutarse"
-	@echo "   Ejecuta 'make serve' para iniciar el servidor"
+	npm ci
 
 # Comando por defecto
 .DEFAULT_GOAL := help
